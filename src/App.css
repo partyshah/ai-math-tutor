@@ -1,0 +1,301 @@
+.App {
+  height: 100vh;
+  display: flex;
+  padding: 20px;
+}
+
+.split-screen-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  gap: 20px;
+}
+
+.pdf-panel {
+  flex: 0 0 60%;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-panel {
+  flex: 0 0 40%;
+  display: flex;
+}
+
+.chat-container {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+.chat-header h1 {
+  margin: 0;
+  color: #333;
+  font-size: 24px;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.message {
+  display: flex;
+  max-width: 70%;
+}
+
+.message.user {
+  align-self: flex-end;
+}
+
+.message.assistant {
+  align-self: flex-start;
+}
+
+.message-content {
+  padding: 12px 16px;
+  border-radius: 18px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.message.user .message-content {
+  background-color: #007bff;
+  color: white;
+}
+
+.message.assistant .message-content {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.chat-input {
+  padding: 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input textarea {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  resize: none;
+  font-family: inherit;
+  font-size: 14px;
+  min-height: 20px;
+  max-height: 100px;
+}
+
+.chat-input textarea:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.chat-input button {
+  padding: 12px 24px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.chat-input button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.chat-input button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.feedback-section {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+.feedback-button {
+  padding: 12px 24px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.feedback-button:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.feedback-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* PDF Viewer Styles */
+.pdf-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pdf-controls {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  background: #f8f9fa;
+}
+
+.assignment-selector {
+  margin-bottom: 15px;
+}
+
+.assignment-dropdown {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+}
+
+.assignment-dropdown:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.pdf-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.page-controls, .zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-btn {
+  padding: 8px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.control-btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.control-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.page-info, .zoom-info {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.pdf-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+.no-assignment, .pdf-loading, .pdf-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #666;
+  font-size: 16px;
+}
+
+.pdf-error {
+  color: #dc3545;
+}
+
+.pdf-document {
+  display: flex;
+  justify-content: center;
+}
+
+.react-pdf__Page {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.react-pdf__Page__canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .split-screen-container {
+    flex-direction: column;
+  }
+  
+  .pdf-panel {
+    flex: 0 0 50%;
+  }
+  
+  .chat-panel {
+    flex: 0 0 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .App {
+    padding: 10px;
+  }
+  
+  .split-screen-container {
+    gap: 10px;
+  }
+  
+  .pdf-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .chat-header h1 {
+    font-size: 20px;
+  }
+}
