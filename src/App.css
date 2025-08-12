@@ -26,14 +26,22 @@
   display: flex;
 }
 
-.chat-container {
+.chat-panel-container {
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.chat-container {
+  flex: 0 0 60%;
   background: white;
-  border-radius: 10px;
+  border-radius: 0 0 10px 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .chat-header {
@@ -46,6 +54,37 @@
   margin: 0;
   color: #333;
   font-size: 24px;
+}
+
+.intervention-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.intervention-status.complete {
+  background-color: #e8f5e8;
+  border-color: #81c784;
+  color: #2e7d32;
+}
+
+.intervention-indicator {
+  font-size: 16px;
+}
+
+.intervention-text {
+  font-weight: 500;
+  color: #1565c0;
+}
+
+.intervention-status.complete .intervention-text {
+  color: #2e7d32;
 }
 
 .chat-messages {
@@ -94,6 +133,12 @@
   gap: 10px;
 }
 
+.input-controls {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
 .chat-input textarea {
   flex: 1;
   padding: 12px;
@@ -131,30 +176,110 @@
   cursor: not-allowed;
 }
 
-.feedback-section {
+.stop-speech-btn {
+  min-width: 44px !important;
+  padding: 12px !important;
+  font-size: 16px !important;
+}
+
+.stop-speech-btn:disabled {
+  opacity: 0.5;
+}
+
+.recording-section {
   padding: 15px 20px;
   border-top: 1px solid #eee;
   text-align: center;
 }
 
-.feedback-button {
+.recording-button {
   padding: 12px 24px;
-  background-color: #28a745;
-  color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
+  transition: background-color 0.2s;
 }
 
-.feedback-button:hover:not(:disabled) {
+.recording-button.start {
+  background-color: #dc3545;
+  color: white;
+}
+
+.recording-button.start:hover {
+  background-color: #c82333;
+}
+
+.recording-button.stop {
+  background-color: #6c757d;
+  color: white;
+}
+
+.recording-button.stop:hover {
+  background-color: #545b62;
+}
+
+.recording-button.resume {
+  background-color: #28a745;
+  color: white;
+  margin-left: 10px;
+}
+
+.recording-button.resume:hover {
   background-color: #218838;
 }
 
-.feedback-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
+.recording-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.recording-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.recording-indicator.active {
+  animation: pulse 1s infinite;
+}
+
+.recording-indicator.paused {
+  animation: none;
+  opacity: 0.7;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.recording-time {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: #dc3545;
+}
+
+.audio-playback {
+  margin-top: 15px;
+}
+
+.audio-playback audio {
+  width: 100%;
+  max-width: 300px;
+}
+
+.pause-reason {
+  font-size: 11px;
+  color: #856404;
+  font-style: italic;
+  margin-left: 8px;
 }
 
 /* PDF Viewer Styles */
@@ -170,22 +295,84 @@
   background: #f8f9fa;
 }
 
-.assignment-selector {
+.file-upload-section {
   margin-bottom: 15px;
 }
 
-.assignment-dropdown {
+.upload-container {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
 }
 
-.assignment-dropdown:focus {
-  outline: none;
-  border-color: #007bff;
+.upload-label {
+  display: block;
+  width: 100%;
+  padding: 40px 20px;
+  border: 2px dashed #007bff;
+  border-radius: 12px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.upload-label:hover {
+  border-color: #0056b3;
+  background: #e3f2fd;
+  transform: translateY(-2px);
+}
+
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.upload-icon {
+  font-size: 48px;
+  color: #007bff;
+}
+
+.upload-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.upload-subtext {
+  font-size: 14px;
+  color: #666;
+}
+
+.uploaded-file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
+  background: #e8f5e8;
+  border: 1px solid #4caf50;
+  border-radius: 8px;
+}
+
+.file-name {
+  font-size: 14px;
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.replace-file-btn {
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.replace-file-btn:hover {
+  background: #0056b3;
 }
 
 .pdf-toolbar {
@@ -200,6 +387,56 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.lock-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 15px;
+  padding-left: 15px;
+  border-left: 1px solid #ddd;
+}
+
+.lock-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.lock-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.lock-btn.locked {
+  background-color: #fff3cd;
+}
+
+.lock-btn.locked:hover {
+  background-color: #ffeaa7;
+}
+
+.lock-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.lock-btn:disabled:hover {
+  background-color: #fff3cd;
+}
+
+.lock-status {
+  font-size: 12px;
+  color: #856404;
+  font-weight: 500;
+  background-color: #fff3cd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ffeaa7;
 }
 
 .control-btn {
@@ -253,12 +490,39 @@
 
 .pdf-document {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 .react-pdf__Page {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
+}
+
+.questions-ready-section {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.questions-ready-btn {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.questions-ready-btn:hover {
+  background: linear-gradient(135deg, #45a049, #4CAF50);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
 .react-pdf__Page__canvas {
