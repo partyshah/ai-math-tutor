@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
+import tempfile
 from dotenv import load_dotenv
-from ai_service import chat_with_ai, generate_feedback
-from pdf_utils import get_assignment_text
+from ai_service import chat_with_ai, transcribe_audio
+from pdf_utils import get_assignment_text, get_assignment_slides_range
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
@@ -13,38 +14,73 @@ CORS(app, origins=["http://localhost:3000"])
 @app.route('/api/chat', methods=['POST'])
 def chat():
     try:
-        data = request.get_json()
-        messages = data.get('messages', [])
-        selected_assignment = data.get('selectedAssignment')
+        print("🌐 API /chat endpoint called")
+        print(f"📋 Content-Type: {request.content_type}")
         
-        if not messages:
-            return jsonify({'error': 'Messages are required'}), 400
+        # Check if this is a multipart request (with audio file)
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            print("🎵 Multipart request detected - checking for audio...")
+            
+            # Handle multipart request with audio
+            messages_json = request.form.get('messages')
+            if not messages_json:
+                return jsonify({'error': 'Messages are required'}), 400
+            
+            import json
+            messages = json.loads(messages_json)
+            selected_assignment = request.form.get('selectedAssignment')
+            
+            # Handle audio file if present
+            audio_transcription = None
+            if 'audio' in request.files:
+                audio_file = request.files['audio']
+                print(f"🎙️ Audio file received: {audio_file.filename}")
+                print(f"📏 Audio file size: {audio_file.content_length} bytes")
+                
+                if audio_file and audio_file.filename:
+                    # Save audio file temporarily
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio:
+                        audio_file.save(temp_audio.name)
+                        print(f"💾 Audio saved to temporary file: {temp_audio.name}")
+                        
+                        try:
+                            # Transcribe audio
+                            print("🔊 Starting audio transcription with Whisper...")
+                            audio_transcription = transcribe_audio(temp_audio.name)
+                            print(f"✅ Audio transcription successful!")
+                            print(f"📝 Transcription: {audio_transcription}")
+                        except Exception as transcribe_error:
+                            print(f"❌ Transcription failed: {transcribe_error}")
+                        finally:
+                            # Clean up temporary file
+                            os.unlink(temp_audio.name)
+                            print("🗑️ Temporary audio file cleaned up")
+            else:
+                print("⚠️ No audio file found in multipart request")
+            
+        else:
+            # Handle regular JSON request
+            data = request.get_json()
+            messages = data.get('messages', [])
+            selected_assignment = data.get('selectedAssignment')
+            audio_transcription = None
+            
+            if not messages:
+                return jsonify({'error': 'Messages are required'}), 400
         
         # Extract PDF context if assignment is selected
         pdf_context = None
         if selected_assignment:
             pdf_context = get_assignment_text(selected_assignment)
         
-        response = chat_with_ai(messages, pdf_context)
-        return jsonify({'response': response})
+        ai_response = chat_with_ai(messages, pdf_context, audio_transcription)
+        
+        # Return simple response for entrepreneurship mentoring
+        return jsonify({'response': ai_response})
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/feedback', methods=['POST'])
-def feedback():
-    try:
-        data = request.get_json()
-        messages = data.get('messages', [])
-        
-        if not messages:
-            return jsonify({'error': 'Messages are required'}), 400
-        
-        feedback_report = generate_feedback(messages)
-        return jsonify({'feedback': feedback_report})
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/assignments', methods=['GET'])
 def get_assignments():
@@ -77,6 +113,31 @@ def get_assignment_file(filename):
             return jsonify({'error': 'File not found'}), 404
             
         return send_file(file_path, mimetype='application/pdf')
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/assignments/<filename>/slides', methods=['POST'])
+def get_assignment_slides(filename):
+    try:
+        data = request.get_json()
+        start_slide = data.get('start_slide')
+        end_slide = data.get('end_slide')
+        
+        if not start_slide or not end_slide:
+            return jsonify({'error': 'start_slide and end_slide are required'}), 400
+            
+        slide_content = get_assignment_slides_range(filename, start_slide, end_slide)
+        full_content = get_assignment_text(filename)
+        
+        if slide_content is None:
+            return jsonify({'error': 'Could not extract slide content'}), 404
+            
+        return jsonify({
+            'slide_range': f"{start_slide}-{end_slide}",
+            'focused_content': slide_content,
+            'full_content': full_content
+        })
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500

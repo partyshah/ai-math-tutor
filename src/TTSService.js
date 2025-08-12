@@ -4,6 +4,27 @@ class TTSService {
     this.apiKey = process.env.REACT_APP_ELEVENLABS_API_KEY || 'your-api-key-here';
     this.voiceId = process.env.REACT_APP_ELEVENLABS_VOICE_ID || 'b49kxxWbYzfNv7AZOp3g';
     this.baseUrl = 'https://api.elevenlabs.io/v1';
+    this.isLoading = false;
+    this.isSpeaking = false;
+    this.listeners = new Set();
+    
+    // Recording capabilities
+    this.recordingData = null;
+  }
+
+  // Method to set recording data from App component
+  setRecordingData(audioBlob) {
+    this.recordingData = audioBlob;
+  }
+
+  // Method to get recording data
+  getRecordingData() {
+    return this.recordingData;
+  }
+
+  // Method to clear recording data
+  clearRecordingData() {
+    this.recordingData = null;
   }
 
   async speak(text) {
@@ -17,6 +38,12 @@ class TTSService {
       if (!cleanText.trim()) {
         return;
       }
+
+      // Set loading state
+      console.log('TTS: Setting loading state to true');
+      this.isLoading = true;
+      this.isSpeaking = false;
+      this.notifyListeners();
 
       const response = await fetch(`${this.baseUrl}/text-to-speech/${this.voiceId}`, {
         method: 'POST',
@@ -44,18 +71,47 @@ class TTSService {
       
       this.currentAudio = new Audio(audioUrl);
       
-      // Clean up blob URL when audio ends
-      this.currentAudio.addEventListener('ended', () => {
-        URL.revokeObjectURL(audioUrl);
-        this.currentAudio = null;
+      // Set up event listeners
+      this.currentAudio.addEventListener('canplay', () => {
+        console.log('TTS: Audio can play, switching to speaking state');
+        this.isLoading = false;
+        this.isSpeaking = true;
+        this.notifyListeners();
       });
 
+      this.currentAudio.addEventListener('play', () => {
+        console.log('TTS: Audio started playing');
+        this.isLoading = false;
+        this.isSpeaking = true;
+        this.notifyListeners();
+      });
+
+      this.currentAudio.addEventListener('ended', () => {
+        console.log('TTS: Audio ended');
+        URL.revokeObjectURL(audioUrl);
+        this.currentAudio = null;
+        this.isSpeaking = false;
+        this.notifyListeners();
+      });
+
+      this.currentAudio.addEventListener('error', (e) => {
+        console.error('Audio playback error:', e);
+        URL.revokeObjectURL(audioUrl);
+        this.currentAudio = null;
+        this.isLoading = false;
+        this.isSpeaking = false;
+        this.notifyListeners();
+      });
+
+      console.log('TTS: Starting audio playback');
       // Auto-play the audio
       await this.currentAudio.play();
       
     } catch (error) {
       console.error('TTS Error:', error);
-      // Fail silently - don't disrupt user experience
+      this.isLoading = false;
+      this.isSpeaking = false;
+      this.notifyListeners();
     }
   }
 
@@ -65,6 +121,36 @@ class TTSService {
       this.currentAudio.currentTime = 0;
       this.currentAudio = null;
     }
+    this.isLoading = false;
+    this.isSpeaking = false;
+    this.notifyListeners();
+  }
+
+  // Event listener management
+  addListener(callback) {
+    this.listeners.add(callback);
+  }
+
+  removeListener(callback) {
+    this.listeners.delete(callback);
+  }
+
+  notifyListeners() {
+    this.listeners.forEach(callback => {
+      callback({
+        isLoading: this.isLoading,
+        isSpeaking: this.isSpeaking
+      });
+    });
+  }
+
+  // Getter methods for current state
+  getIsLoading() {
+    return this.isLoading;
+  }
+
+  getIsSpeaking() {
+    return this.isSpeaking;
   }
 
   cleanTextForTTS(text) {

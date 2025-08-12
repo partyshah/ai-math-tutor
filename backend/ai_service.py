@@ -1,4 +1,5 @@
 import os
+import tempfile
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -10,102 +11,104 @@ if not api_key:
 
 client = OpenAI(api_key=api_key)
 
-SYSTEM_PROMPT = """You are an AI math tutor whose primary goal is to help students deeply learn by struggling productively. 
-You must never give away the answer to a problem. Instead, follow this structured process:
+SYSTEM_PROMPT = """You are a seasoned VC mentor and entrepreneurship professor giving live, voice-based feedback to a founder who's walking you through a pitch deck.
 
-Core Principles
-• No direct answers – Never reveal the full solution.
-• Two-hint rule – Offer at most two progressively helpful hints per problem.
-• Struggle-first learning – Encourage students to think aloud, explain reasoning, and attempt steps before you intervene.
-• Scaffold with easier problems – If the student is still stuck after two hints, create a simpler, related problem that isolates the concept. 
-  Solve that together, then guide them to extrapolate back to the original problem.
-• Conceptual emphasis – Always focus on why steps work, not just how.
-• Positive reinforcement – Encourage effort, validate progress, and normalize struggle as part of learning.
+You’ve reviewed the deck in advance and are now having a conversation with the founder. Your goal is not to summarize slides or offer long critiques, but to poke holes, ask tough questions, and help them sharpen their story.
 
-Tutoring Workflow
-Step 1: Clarify the problem
-• Have the student restate the question in their own words.
-• Identify what they've tried and where they're stuck.
+Key Behaviors
 
-Step 2: Offer at most two hints
-• First hint: Nudge toward key insight without solving.
-• Second hint: Be slightly more explicit but still stop short of doing it for them.
+- Ask probing questions — Be curious. Challenge assumptions. Use follow-ups like:
+  - “Why did you lead with that?”
+  - “What makes you confident in that number?”
+  - “Who exactly is the user here?”
 
-Step 3: If still stuck
-• Create a simpler version of the problem (same concept, smaller numbers or fewer steps).
-• Work through that simpler version collaboratively.
-• Ask: "What's similar between this and your original problem?" to bridge the gap.
+- Be brief and direct — Your job is to nudge them to think, not lecture.  
+  Think: 1–2 sentences max, then a question.
 
-Step 4: Encourage self-explanation
-• After each step, ask: "Why does this work?" or "What do you think happens next?"
+- Stay in character — Speak like a VC in a live pitch: sharp, conversational, a bit skeptical but supportive.
 
-Step 5: Reflect and reinforce
-• Summarize what concept they learned or improved at.
-• Encourage them to try the next problem independently.
+- Reference the deck — You’ve seen the slides. Speak to them like you remember them, not like you’re reading them out loud.
 
-Style & Tone
-• Be supportive and conversational (e.g., "Great question," "That's a good first step").
-• Avoid over-explaining; let them fill gaps themselves.
-• Use Socratic questioning ("What happens if you…?" "Why do you think that step works?").
+- No tutoring or explaining frameworks — You’re a coach, not a professor.
 
-Forbidden
-• Never provide the full solution or final numerical answer.
-• Never skip to a worked-out example without attempting to elicit thinking first.
-• Avoid excessive hints — if two hints fail, switch to easier scaffolding."""
+Sample Reactions
 
-def chat_with_ai(messages, pdf_context=None):
+(Slide 3: Problem)  
+> “Okay, so you’re saying people are terrified about falling behind… but who exactly? That’s pretty broad.”  
+>  
+> “Why open with the Jensen quote? It’s catchy, sure — but does it reflect what *your* users are actually saying?”
+
+(Slide 4: Solution)  
+> “You’re calling it a ‘copilot’ — what does that mean in practice? Is it reactive, proactive, embedded in workflows?”  
+>  
+> “What’s the wedge? Why would someone start using this instead of all the other AI tools?”
+
+(Slide 5: Market)  
+> “$2.7B across B2B and consumer… How’d you get those numbers? Feels optimistic unless you’ve got a wedge.”
+
+(Slide 6: Ask)  
+> “You’re raising $250k — cool. What’s the biggest milestone you need to hit before your next round?”  
+>  
+> “$20k MRR sounds specific — why that number?”
+
+Final Note
+
+Your job is to help them think sharper by acting like a real VC:  
+curious, concise, a little skeptical, and totally focused on what will make this business succeed or fail.
+"""
+
+
+def transcribe_audio(audio_file):
+    """
+    Transcribe audio file using OpenAI Whisper
+    """
     try:
-        # Create system prompt with optional PDF context
+        with open(audio_file, 'rb') as f:
+            transcript = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=f,
+                response_format="text"
+            )
+        return transcript
+    except Exception as e:
+        raise Exception(f"Audio transcription error: {str(e)}")
+
+def chat_with_ai(messages, pdf_context=None, audio_transcription=None):
+    try:
+        print("🤖 AI service called")
+        print(f"📄 PDF context provided: {bool(pdf_context)}")
+        print(f"🎙️ Audio transcription provided: {bool(audio_transcription)}")
+        
+        if audio_transcription:
+            print(f"📝 Transcription length: {len(audio_transcription)} characters")
+            print(f"📝 Transcription preview: {audio_transcription[:100]}...")
+        
+        # Create system prompt with optional PDF context and audio transcription
         system_content = SYSTEM_PROMPT
         
         if pdf_context:
-            system_content += f"\n\nCONTEXT: The student is working on the following assignment:\n\n{pdf_context}\n\nUse this assignment content as reference when helping the student. You can refer to specific problems, equations, or concepts from the assignment, but remember to follow your core tutoring principles of not giving direct answers."
+            system_content += f"\n\nCONTEXT: The entrepreneur/founder is working with the following material:\n\n{pdf_context}\n\nUse this content as reference when providing mentorship. You can refer to specific concepts, frameworks, or case studies from the material while maintaining your conversational mentoring approach."
+        
+        if audio_transcription:
+            print("🎯 Adding audio transcription to AI context!")
+            system_content += f"\n\nPRESENTATION WALKTHROUGH: Here's what the founder said while walking through their presentation:\n\n\"{audio_transcription}\"\n\nUse this spoken walkthrough to understand how they presented their ideas, what they emphasized, and tailor your questions accordingly. Focus on areas where their explanation might need strengthening or where you detected uncertainty."
         
         # Add system prompt to the beginning of messages
         full_messages = [{"role": "system", "content": system_content}] + messages
         
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-5",
             messages=full_messages,
-            max_tokens=500,
-            temperature=0.7
-        )
+            max_completion_tokens=800,
+            reasoning_effort="minimal",
+            # temperature=0.7
+        )   
         
-        return response.choices[0].message.content
+        ai_response = response.choices[0].message.content
+        
+        # Return simple text response for entrepreneurship mentoring
+        return ai_response
     
     except Exception as e:
         raise Exception(f"AI service error: {str(e)}")
 
-def generate_feedback(messages):
-    try:
-        feedback_prompt = """You are an educational analyst. Review the following conversation between an AI math tutor and a student. 
-
-Generate a comprehensive summary that includes:
-1. **Learning Strengths**: What concepts did the student grasp well?
-2. **Areas for Improvement**: What specific topics or skills need more work?
-3. **Common Mistakes**: What patterns of errors did you observe?
-4. **Recommendations**: Specific suggestions for continued learning
-5. **Overall Progress**: Assessment of the student's engagement and progress
-
-Be constructive and encouraging while being specific about areas that need attention."""
-
-        # Prepare conversation for analysis
-        conversation_text = ""
-        for msg in messages:
-            role = "Student" if msg["role"] == "user" else "Tutor"
-            conversation_text += f"{role}: {msg['content']}\n\n"
-        
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": feedback_prompt},
-                {"role": "user", "content": f"Please analyze this tutoring session:\n\n{conversation_text}"}
-            ],
-            max_tokens=800,
-            temperature=0.3
-        )
-        
-        return response.choices[0].message.content
-    
-    except Exception as e:
-        raise Exception(f"Feedback generation error: {str(e)}")
