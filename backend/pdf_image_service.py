@@ -27,7 +27,10 @@ SLIDE_IMAGES_DIR = "slide_images"
 
 def ensure_directories():
     """Ensure required directories exist"""
-    os.makedirs(SLIDE_IMAGES_DIR, exist_ok=True)
+    # Get absolute path to the backend directory
+    backend_dir = os.path.dirname(os.path.abspath(__file__))
+    slide_images_path = os.path.join(backend_dir, SLIDE_IMAGES_DIR)
+    os.makedirs(slide_images_path, exist_ok=True)
 
 def get_pdf_slide_image(pdf_path, slide_number, thumbnail_size=(300, 200)):
     """
@@ -103,7 +106,9 @@ def save_slide_images(pdf_path, session_id):
             return {}
         
         ensure_directories()
-        session_dir = os.path.join(SLIDE_IMAGES_DIR, session_id)
+        # Get absolute path to the backend directory
+        backend_dir = os.path.dirname(os.path.abspath(__file__))
+        session_dir = os.path.join(backend_dir, SLIDE_IMAGES_DIR, session_id)
         os.makedirs(session_dir, exist_ok=True)
         print(f"📁 Session directory created: {session_dir}")
         
@@ -179,7 +184,9 @@ def get_slide_image_path(session_id, slide_number, image_type='thumbnail'):
     Returns:
         File path or None if not found
     """
-    session_dir = os.path.join(SLIDE_IMAGES_DIR, session_id)
+    # Get absolute path to the backend directory
+    backend_dir = os.path.dirname(os.path.abspath(__file__))
+    session_dir = os.path.join(backend_dir, SLIDE_IMAGES_DIR, session_id)
     # Map 'thumbnail' to 'thumb' for backward compatibility
     file_type = 'thumb' if image_type == 'thumbnail' else image_type
     image_file = f"slide_{slide_number}_{file_type}.png"

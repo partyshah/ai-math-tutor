@@ -30,7 +30,10 @@ AUDIO_SESSIONS_DIR = "audio_sessions"
 
 def ensure_audio_directories():
     """Ensure required directories exist"""
-    os.makedirs(AUDIO_SESSIONS_DIR, exist_ok=True)
+    # Get absolute path to the backend directory
+    backend_dir = os.path.dirname(os.path.abspath(__file__))
+    audio_sessions_path = os.path.join(backend_dir, AUDIO_SESSIONS_DIR)
+    os.makedirs(audio_sessions_path, exist_ok=True)
 
 FEEDBACK_SYSTEM_PROMPT = """You are a tough, no-nonsense professor evaluating a student's startup pitch. You have three inputs: (1) the slide deck text and structure (SLIDES), (2) the spoken presentation transcript with any timestamps (AUDIO), and (3) the post-pitch conversation between the "VC" and the student (DIALOGUE). Your job is to deliver a single dense paragraph of blunt, specific feedback that maps directly to four learning objectives. Be candid, concrete, and harsh-but-fair; prioritize weaknesses and what to fix next. Avoid niceties, padding, or generic praise. No lists, no line breaks, no emojis.
 
@@ -80,7 +83,9 @@ def save_audio_segments(session_id, audio_segments):
     """
     try:
         ensure_audio_directories()
-        session_dir = os.path.join(AUDIO_SESSIONS_DIR, session_id)
+        # Get absolute path to the backend directory
+        backend_dir = os.path.dirname(os.path.abspath(__file__))
+        session_dir = os.path.join(backend_dir, AUDIO_SESSIONS_DIR, session_id)
         os.makedirs(session_dir, exist_ok=True)
         
         saved_segments = {}
@@ -116,7 +121,9 @@ def save_audio_segments(session_id, audio_segments):
 
 def get_audio_segment_path(session_id, slide_number):
     """Get the file path for a specific slide's audio segment"""
-    session_dir = os.path.join(AUDIO_SESSIONS_DIR, session_id)
+    # Get absolute path to the backend directory
+    backend_dir = os.path.dirname(os.path.abspath(__file__))
+    session_dir = os.path.join(backend_dir, AUDIO_SESSIONS_DIR, session_id)
     audio_file = f"slide_{slide_number}.wav"
     audio_path = os.path.join(session_dir, audio_file)
     

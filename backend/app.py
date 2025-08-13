@@ -268,28 +268,58 @@ def get_slide_image(session_id, slide_number):
     try:
         image_type = request.args.get('type', 'thumbnail')  # 'thumbnail' or 'full'
         
+        print(f"🖼️ Requesting slide image: session={session_id}, slide={slide_number}, type={image_type}")
+        
         image_path = get_slide_image_path(session_id, slide_number, image_type)
         
+        print(f"🖼️ Image path resolved to: {image_path}")
+        
         if not image_path or not os.path.exists(image_path):
+            print(f"❌ Image not found at path: {image_path}")
+            # List what files exist in the session directory for debugging
+            backend_dir = os.path.dirname(os.path.abspath(__file__))
+            session_dir = os.path.join(backend_dir, 'slide_images', session_id)
+            if os.path.exists(session_dir):
+                files = os.listdir(session_dir)
+                print(f"📁 Files in session directory: {files}")
+            else:
+                print(f"❌ Session directory does not exist: {session_dir}")
             return jsonify({'error': 'Slide image not found'}), 404
         
+        print(f"✅ Serving image from: {image_path}")
         return send_file(image_path, mimetype='image/png')
     
     except Exception as e:
+        print(f"❌ Error serving slide image: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/audio-segment/<session_id>/<int:slide_number>', methods=['GET'])
 def get_audio_segment(session_id, slide_number):
     """Get audio segment for a specific slide"""
     try:
+        print(f"🎵 Requesting audio segment: session={session_id}, slide={slide_number}")
+        
         audio_path = get_audio_segment_path(session_id, slide_number)
         
+        print(f"🎵 Audio path resolved to: {audio_path}")
+        
         if not audio_path or not os.path.exists(audio_path):
+            print(f"❌ Audio not found at path: {audio_path}")
+            # List what files exist in the session directory for debugging
+            backend_dir = os.path.dirname(os.path.abspath(__file__))
+            session_dir = os.path.join(backend_dir, 'audio_sessions', session_id)
+            if os.path.exists(session_dir):
+                files = os.listdir(session_dir)
+                print(f"📁 Files in audio session directory: {files}")
+            else:
+                print(f"❌ Audio session directory does not exist: {session_dir}")
             return jsonify({'error': 'Audio segment not found'}), 404
         
+        print(f"✅ Serving audio from: {audio_path}")
         return send_file(audio_path, mimetype='audio/wav')
     
     except Exception as e:
+        print(f"❌ Error serving audio segment: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/process-upload', methods=['POST'])
