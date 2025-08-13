@@ -95,11 +95,15 @@ def get_assignments():
             
         pdf_files = []
         for filename in os.listdir(assignments_dir):
-            if filename.endswith('.pdf'):
+            # Skip uploaded files (temporary files from previous uploads)
+            if filename.endswith('.pdf') and not filename.startswith('uploaded_'):
                 pdf_files.append({
                     'filename': filename,
                     'displayName': filename.replace('.pdf', '').replace('_', ' ').title()
                 })
+        
+        # Sort by filename for consistent ordering
+        pdf_files.sort(key=lambda x: x['filename'])
         
         return jsonify({'assignments': pdf_files})
     
@@ -168,6 +172,8 @@ def generate_pitch_feedback():
             
             import json
             conversation_history = json.loads(messages_json)
+            print(f"📝 Received {len(conversation_history)} messages in conversation")
+            print(f"📝 Messages types: {[msg.get('role') for msg in conversation_history[:5]]}")
             selected_assignment = request.form.get('selectedAssignment')
             pdf_session_id = request.form.get('pdfSessionId')
             

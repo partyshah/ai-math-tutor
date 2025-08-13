@@ -262,6 +262,7 @@ def generate_feedback(conversation_history, slide_content=None, presentation_rec
     try:
         print("📝 Generating slide-specific feedback...")
         print(f"💬 Conversation messages: {len(conversation_history)}")
+        print(f"💬 First few messages: {conversation_history[:3] if conversation_history else 'None'}")
         print(f"📄 Slide content provided: {bool(slide_content)}")
         print(f"🎙️ Presentation recording provided: {bool(presentation_recording)}")
         print(f"📊 Slide timestamps provided: {len(slide_timestamps) if slide_timestamps else 0}")
@@ -401,14 +402,9 @@ def generate_feedback(conversation_history, slide_content=None, presentation_rec
                         print(f"📊 Gap detected after slide {actual_slide_count}, assuming Q&A follows")
                         break
                 else:
-                    # No gaps, check if last slide makes sense
-                    # If we have 5 slides but only 4 in PDF, last one is likely Q&A
+                    # No gaps, use the max slide number
                     actual_slide_count = max(sorted_slides)
-                    if actual_slide_count > 4:  # Common case: 4 slides + Q&A recorded as slide 5
-                        actual_slide_count = 4
-                        print(f"📊 Detected extra slide, limiting to {actual_slide_count}")
-                    else:
-                        print(f"📊 Using max slide number as count: {actual_slide_count}")
+                    print(f"📊 Using max slide number as count: {actual_slide_count}")
         
         print(f"📊 Final actual slide count: {actual_slide_count}")
         
@@ -459,9 +455,18 @@ def generate_feedback(conversation_history, slide_content=None, presentation_rec
                     feedback_parts.append(f"**Slide {slide_num} Feedback:** Error: {str(e)}")
             
             # Add Q&A section analysis if we detected Q&A or have conversation history
+            print(f"🔍 Q&A Generation Check:")
+            print(f"  - Has conversation history: {bool(conversation_history)}")
+            print(f"  - Conversation length: {len(conversation_history) if conversation_history else 0}")
+            print(f"  - Has Q&A section detected: {has_qa_section}")
+            
             if conversation_history and (has_qa_section or len(conversation_history) > 2):
+                print(f"✅ Generating Q&A feedback...")
                 qa_feedback = generate_qa_feedback(conversation_history)
                 feedback_parts.append(qa_feedback)
+                print(f"✅ Q&A feedback added to parts")
+            else:
+                print(f"⚠️ Skipping Q&A feedback generation")
         
         elif slide_audio_transcripts and len(slide_audio_transcripts) > 1:
             print(f"📊 Generating per-slide feedback for {len(slide_audio_transcripts)} slides based on audio")
@@ -472,9 +477,17 @@ def generate_feedback(conversation_history, slide_content=None, presentation_rec
                 feedback_parts.append(feedback_part)
             
             # Add Q&A section analysis
+            print(f"🔍 Q&A Generation Check (branch 2):")
+            print(f"  - Has conversation history: {bool(conversation_history)}")
+            print(f"  - Conversation length: {len(conversation_history) if conversation_history else 0}")
+            
             if conversation_history:
+                print(f"✅ Generating Q&A feedback...")
                 qa_feedback = generate_qa_feedback(conversation_history)
                 feedback_parts.append(qa_feedback)
+                print(f"✅ Q&A feedback added to parts")
+            else:
+                print(f"⚠️ No conversation history for Q&A feedback")
         
         else:
             # Fallback to single slide feedback when no timestamps available
@@ -489,9 +502,17 @@ def generate_feedback(conversation_history, slide_content=None, presentation_rec
             feedback_parts.append(feedback_part)
             
             # Add Q&A section analysis
+            print(f"🔍 Q&A Generation Check (branch 2):")
+            print(f"  - Has conversation history: {bool(conversation_history)}")
+            print(f"  - Conversation length: {len(conversation_history) if conversation_history else 0}")
+            
             if conversation_history:
+                print(f"✅ Generating Q&A feedback...")
                 qa_feedback = generate_qa_feedback(conversation_history)
                 feedback_parts.append(qa_feedback)
+                print(f"✅ Q&A feedback added to parts")
+            else:
+                print(f"⚠️ No conversation history for Q&A feedback")
         
         # Use PDF session ID for images, generate new session ID for audio
         feedback_session_id = str(uuid.uuid4())
@@ -546,16 +567,24 @@ def generate_feedback(conversation_history, slide_content=None, presentation_rec
         slide_feedback_texts = []
         
         for part in feedback_parts:
-            if "Q&A Session" in part:
+            # Check for Q&A feedback - must start with **Q&A Session**
+            if part.strip().startswith("**Q&A Session"):
                 qa_feedback_text = part
+                print(f"✅ Found Q&A feedback: {part[:50]}...")
             else:
                 slide_feedback_texts.append(part)
+                print(f"📊 Added slide feedback: {part[:50]}...")
         
         # Process individual slide feedback
         for i, feedback_text in enumerate(slide_feedback_texts):
             slide_num = i + 1
             if slide_timestamps_only and i < len(slide_timestamps_only):
                 slide_num = slide_timestamps_only[i]["slideNumber"]
+            
+            # Skip if this slide number exceeds the actual slide count (but allow up to 4 slides minimum)
+            if actual_slide_count and slide_num > max(4, actual_slide_count):
+                print(f"⚠️ Skipping slide {slide_num} as it exceeds actual slide count {actual_slide_count}")
+                continue
             
             # Parse the feedback text to extract individual scores
             parsed_feedback = parse_slide_feedback(feedback_text)
@@ -585,7 +614,11 @@ def generate_feedback(conversation_history, slide_content=None, presentation_rec
         
         # Add Q&A feedback if available
         if qa_feedback_text:
+            print(f"📝 Parsing Q&A feedback text...")
             structured_feedback["qa_feedback"] = parse_qa_feedback(qa_feedback_text)
+            print(f"✅ Q&A feedback parsed: {structured_feedback['qa_feedback']}")
+        else:
+            print(f"⚠️ No Q&A feedback text found to parse")
         
         # Clean up temporary files
         for temp_file in temp_files_to_cleanup:

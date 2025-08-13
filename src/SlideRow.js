@@ -131,10 +131,18 @@ function SlideRow({ slideData, onImageClick }) {
         <div style={{ marginBottom: '10px', fontWeight: 'bold', color: '#2c3e50' }}>
           Learning Objectives
         </div>
-        {renderFeedbackItem('Content Structuring', slideData.feedback.content_structuring)}
-        {renderFeedbackItem('Delivery', slideData.feedback.delivery)}
-        {renderFeedbackItem('Impromptu Response', slideData.feedback.impromptu_response)}
-        {renderFeedbackItem('Composure', slideData.feedback.composure)}
+        {slideData.feedback ? (
+          <>
+            {renderFeedbackItem('Content Structuring', slideData.feedback.content_structuring || {status: 'unknown', comment: 'No feedback available'})}
+            {renderFeedbackItem('Delivery', slideData.feedback.delivery || {status: 'unknown', comment: 'No feedback available'})}
+            {renderFeedbackItem('Impromptu Response', slideData.feedback.impromptu_response || {status: 'not_applicable', comment: 'Evaluated in Q&A section'})}
+            {renderFeedbackItem('Composure', slideData.feedback.composure || {status: 'not_applicable', comment: 'Evaluated in Q&A section'})}
+          </>
+        ) : (
+          <div style={{ color: '#666', fontStyle: 'italic' }}>
+            No feedback data available for this slide
+          </div>
+        )}
       </td>
 
       {/* Column 3: Audio Player */}
