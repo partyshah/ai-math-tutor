@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import PDFViewer from './PDFViewer';
 import TTSService from './TTSService';
 import Avatar from './Avatar';
-import Feedback from './Feedback';
 import './App.css';
 
 const AppContext = createContext();
@@ -13,12 +12,11 @@ function ChatApp() {
     messages, setMessages, selectedAssignment, setSelectedAssignment,
     isRecording, isPaused, startRecording, stopRecording, pauseRecording, resumeRecording,
     audioBlob, recordingTime, formatTime, currentRecordingSegment,
-    interventionState, questionsAsked, handleInterventionResponse, slideTimestamps
+    interventionState, questionsAsked, handleInterventionResponse
   } = useContext(AppContext);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [avatarState, setAvatarState] = useState({ isLoading: false, isSpeaking: false });
-  const [feedbackGenerated, setFeedbackGenerated] = useState(false);
 
   // Set up TTS service listeners for avatar state
   React.useEffect(() => {
@@ -96,91 +94,6 @@ function ChatApp() {
     }
   };
 
-  const generateFeedback = async () => {
-    if (!messages.length) return;
-    
-    setIsLoading(true);
-    try {
-      // Get the latest recording from the context
-      const recordingBlob = currentRecordingSegment;
-      
-      // Get PDF session ID and slide count from localStorage
-      const pdfSessionId = localStorage.getItem('currentPDFSession');
-      const pdfSlideCount = localStorage.getItem('currentPDFSlideCount');
-      console.log('📄 Using PDF session ID:', pdfSessionId);
-      console.log('📄 Using PDF slide count:', pdfSlideCount);
-      
-      if (recordingBlob) {
-        // Send with recording as multipart form data
-        const formData = new FormData();
-        formData.append('messages', JSON.stringify(messages));
-        formData.append('selectedAssignment', selectedAssignment || '');
-        formData.append('recording', recordingBlob, 'presentation.wav');
-        formData.append('slideTimestamps', JSON.stringify(slideTimestamps));
-        formData.append('pdfSessionId', pdfSessionId || '');
-        formData.append('pdfSlideCount', pdfSlideCount || '');
-        
-        const response = await fetch('http://localhost:5001/api/feedback', {
-          method: 'POST',
-          body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-          console.log('Feedback response:', data);
-          if (data.session_id || data.slides || data.feedback) {
-            // New structured format or legacy format
-            const feedbackToStore = data.feedback || JSON.stringify(data);
-            localStorage.setItem('pitchFeedback', feedbackToStore);
-            setFeedbackGenerated(true);
-            alert('Feedback generated! Navigate to /feedback to view it.');
-          } else {
-            alert('Error: No feedback received from server');
-          }
-        } else {
-          console.error('Feedback error:', data);
-          alert(`Error generating feedback: ${data.error || 'Unknown error'}`);
-        }
-      } else {
-        // Send without recording as JSON
-        const response = await fetch('http://localhost:5001/api/feedback', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messages: messages,
-            selectedAssignment: selectedAssignment || '',
-            pdfSessionId: pdfSessionId || ''
-          })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-          console.log('Feedback response (no recording):', data);
-          if (data.session_id || data.slides || data.feedback) {
-            // New structured format or legacy format
-            const feedbackToStore = data.feedback || JSON.stringify(data);
-            localStorage.setItem('pitchFeedback', feedbackToStore);
-            setFeedbackGenerated(true);
-            alert('Feedback generated! Navigate to /feedback to view it.');
-          } else {
-            alert('Error: No feedback received from server');
-          }
-        } else {
-          console.error('Feedback error (no recording):', data);
-          alert(`Error generating feedback: ${data.error || 'Unknown error'}`);
-        }
-      }
-    } catch (error) {
-      alert(`Error generating feedback: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
 
 
   return (
@@ -203,21 +116,6 @@ function ChatApp() {
                 <div className="intervention-status complete">
                   <span className="intervention-indicator">✅</span>
                   <span className="intervention-text">Questions Complete - Continue Presentation</span>
-                  {!feedbackGenerated && (
-                    <button 
-                      onClick={generateFeedback} 
-                      disabled={isLoading}
-                      className="generate-feedback-btn"
-                      style={{marginLeft: '10px', padding: '5px 10px', fontSize: '12px'}}
-                    >
-                      {isLoading ? 'Generating...' : 'Generate Feedback'}
-                    </button>
-                  )}
-                  {feedbackGenerated && (
-                    <span style={{marginLeft: '10px', color: 'green', fontSize: '12px'}}>
-                      Feedback ready at /feedback
-                    </span>
-                  )}
                 </div>
               )}
             </div>
@@ -286,27 +184,11 @@ function App() {
   const [currentSlideRange, setCurrentSlideRange] = useState(null);
   const [autoUnlockReady, setAutoUnlockReady] = useState(false);
   
-  // Slide timestamp tracking for audio splitting
-  const [slideTimestamps, setSlideTimestamps] = useState([]);
-  
   // Audio recording functions
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      // Try to use a format that's more compatible with ffmpeg
-      let mimeType = 'audio/webm';
-      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-        mimeType = 'audio/webm;codecs=opus';
-      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-        mimeType = 'audio/webm';
-      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-        mimeType = 'audio/mp4';
-      }
-      
-      console.log('🎵 Using MIME type for recording:', mimeType);
-      
-      const recorder = new MediaRecorder(stream, { mimeType });
+      const recorder = new MediaRecorder(stream);
       const audioChunks = [];
 
       recorder.ondataavailable = (event) => {
@@ -314,8 +196,7 @@ function App() {
       };
 
       recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: mimeType });
-        console.log('🎵 Created audio blob:', audioBlob.type, audioBlob.size, 'bytes');
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
         setCurrentRecordingSegment(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
@@ -378,10 +259,9 @@ function App() {
         mediaRecorder.onstop = (event) => {
           console.log('🎵 Recording stopped, creating blob...');
           
-          // Use the same MIME type as the MediaRecorder
-          const mimeType = mediaRecorder.mimeType || 'audio/webm';
-          const audioBlob = new Blob(audioChunks, { type: mimeType });
-          console.log('🎵 Blob created:', audioBlob.type, 'Size:', audioBlob.size);
+          // Create the blob from our captured chunks
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          console.log('🎵 Blob created:', audioBlob, 'Size:', audioBlob.size);
           
           // Call the original handler to update state
           if (originalOnStop) {
@@ -687,17 +567,12 @@ function App() {
     }
   };
 
-  const handleSlideTimestampsChange = (timestamps) => {
-    setSlideTimestamps(timestamps);
-    console.log('📊 Updated slide timestamps:', timestamps);
-  };
-
   return (
     <AppContext.Provider value={{ 
       messages, setMessages, selectedAssignment, setSelectedAssignment,
       isRecording, isPaused, startRecording, stopRecording, pauseRecording, resumeRecording,
       audioBlob, recordingTime, formatTime, currentRecordingSegment,
-      interventionState, questionsAsked, autoUnlockReady, handleInterventionResponse, slideTimestamps
+      interventionState, questionsAsked, autoUnlockReady, handleInterventionResponse
     }}>
       <Router>
         <Routes>
@@ -720,7 +595,6 @@ function App() {
                     recordingTime={recordingTime}
                     formatTime={formatTime}
                     getLatestRecording={getLatestRecording}
-                    onSlideTimestampsChange={handleSlideTimestampsChange}
                   />
                 </div>
                 
@@ -730,7 +604,6 @@ function App() {
               </div>
             </div>
           } />
-          <Route path="/feedback" element={<Feedback />} />
         </Routes>
       </Router>
     </AppContext.Provider>
