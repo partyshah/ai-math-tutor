@@ -6,7 +6,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 // Use the local worker from public directory
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
-function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, onSlideAdvance, currentRecordingSegment, isRecording, stopRecording, getLatestRecording }) {
+function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, onSlideAdvance, currentRecordingSegment, isRecording, isPaused, startRecording, stopRecording, pauseRecording, resumeRecording, recordingTime, formatTime, getLatestRecording, onSlideTimestampsChange }) {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [numPages, setNumPages] = useState(null);
@@ -19,6 +19,10 @@ function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, 
   const [isLocked, setIsLocked] = useState(false);
   const [lockTriggerSlides, setLockTriggerSlides] = useState([]); // Will be set to [numPages] when PDF loads
   const [unlockedSlides, setUnlockedSlides] = useState(new Set()); // Track which slides have been manually unlocked
+  
+  // Slide timestamp tracking for audio splitting
+  const [slideTimestamps, setSlideTimestamps] = useState([]);
+  const [recordingStartTime, setRecordingStartTime] = useState(null);
 
   // Remove the fetchAssignments effect since we're using file upload now
   
@@ -32,7 +36,30 @@ function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, 
     }
   }, [autoUnlockReady, isLocked, pageNumber]);
 
-  const handleFileUpload = (event) => {
+  // Track recording start time for timestamp calculations
+  useEffect(() => {
+    if (isRecording && !recordingStartTime) {
+      const startTime = Date.now();
+      setRecordingStartTime(startTime);
+      console.log('📊 Recording start time tracked:', startTime);
+      
+      // Initialize timestamps with slide 1
+      const initialTimestamp = { slideNumber: 1, timestamp: 0 };
+      setSlideTimestamps([initialTimestamp]);
+      
+      // Notify parent of timestamp changes
+      if (onSlideTimestampsChange) {
+        onSlideTimestampsChange([initialTimestamp]);
+      }
+    } else if (!isRecording && recordingStartTime) {
+      // Recording stopped, reset tracking
+      setRecordingStartTime(null);
+      setSlideTimestamps([]);
+      console.log('📊 Recording timestamp tracking reset');
+    }
+  }, [isRecording, recordingStartTime, onSlideTimestampsChange]);
+
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file && file.type === 'application/pdf') {
       setUploadedFile(file);
@@ -44,9 +71,36 @@ function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, 
       setIsLocked(false);
       setUnlockedSlides(new Set());
       
-      // Notify parent component about file upload
-      if (onAssignmentChange) {
-        onAssignmentChange(file.name);
+      try {
+        // Process PDF to extract slide images
+        console.log('📄 Processing PDF for slide extraction...');
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch('http://localhost:5001/api/process-upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          console.log('✅ PDF processed successfully:', data);
+          // Store session ID for later use in feedback
+          localStorage.setItem('currentPDFSession', data.session_id);
+          localStorage.setItem('currentPDFSlideCount', data.slide_count);
+          
+          // Notify parent component about file upload using the server-generated filename
+          if (onAssignmentChange) {
+            onAssignmentChange(data.filename); // Use the safe filename that was saved to assignments
+          }
+        } else {
+          console.error('❌ PDF processing failed:', data.error);
+          setError(`Failed to process PDF: ${data.error}`);
+        }
+      } catch (error) {
+        console.error('❌ PDF upload error:', error);
+        setError(`Upload error: ${error.message}`);
       }
     } else {
       setError('Please select a valid PDF file');
@@ -96,6 +150,24 @@ function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, 
     
     setPageNumber(newPageNumber);
     
+    // Record timestamp when advancing to next slide during recording
+    if (offset > 0 && isRecording && recordingStartTime) {
+      const currentTime = Date.now();
+      const elapsedSeconds = (currentTime - recordingStartTime) / 1000;
+      const newTimestamp = { slideNumber: newPageNumber, timestamp: elapsedSeconds };
+      
+      setSlideTimestamps(prev => {
+        const updated = [...prev, newTimestamp];
+        // Notify parent of timestamp changes
+        if (onSlideTimestampsChange) {
+          onSlideTimestampsChange(updated);
+        }
+        return updated;
+      });
+      
+      console.log(`📊 Slide ${newPageNumber} timestamp recorded: ${elapsedSeconds}s`);
+    }
+    
     // Notify parent when advancing slides (for recording resume)
     if (offset > 0 && onSlideAdvance) {
       onSlideAdvance();
@@ -124,7 +196,7 @@ function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, 
   };
   
   const isForwardBlocked = () => {
-    return isLocked || (pageNumber >= numPages);
+    return isLocked;
   };
 
   return (
@@ -181,11 +253,42 @@ function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, 
                 Page {pageNumber} of {numPages || '?'}
               </span>
               <button 
-                onClick={() => changePage(1)} 
+                onClick={async () => {
+                  if (pageNumber === numPages) {
+                    // This is the Finish button functionality
+                    console.log('🎙️ Finish clicked - starting VC conversation!');
+                    console.log('📊 Is currently recording:', isRecording);
+                    console.log('📁 Current recording segment:', currentRecordingSegment);
+                    console.log('📊 Recording segment type:', currentRecordingSegment?.constructor?.name);
+                    console.log('📏 Recording segment size:', currentRecordingSegment?.size, 'bytes');
+                    
+                    setIsLocked(true);
+                    
+                    // If recording is active, stop it and get the latest recording
+                    if (isRecording && stopRecording && getLatestRecording) {
+                      console.log('🛑 Stopping recording to capture audio...');
+                      const latestRecording = await getLatestRecording();
+                      console.log('🎵 Latest recording captured:', latestRecording);
+                      console.log('📏 Latest recording size:', latestRecording?.size, 'bytes');
+                      
+                      if (onSlideLockTriggered) {
+                        onSlideLockTriggered(pageNumber, latestRecording);
+                      }
+                    } else {
+                      // No active recording, proceed with existing segment
+                      if (onSlideLockTriggered) {
+                        onSlideLockTriggered(pageNumber, currentRecordingSegment);
+                      }
+                    }
+                  } else {
+                    // Regular Next button functionality
+                    changePage(1);
+                  }
+                }}
                 disabled={isForwardBlocked()}
                 className="control-btn"
               >
-                Next
+                {pageNumber === numPages ? 'Finish' : 'Next'}
               </button>
               
               {/* Lock indicator and control */}
@@ -253,43 +356,51 @@ function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, 
                 />
               )}
             </Document>
-            
-            {/* Ready for Questions button - only show on last page */}
-            {numPages && pageNumber === numPages && (
-              <div className="questions-ready-section">
-                <button 
-                  className="questions-ready-btn"
-                  onClick={async () => {
-                    console.log('🎙️ Ready for questions clicked!');
-                    console.log('📊 Is currently recording:', isRecording);
-                    console.log('📁 Current recording segment:', currentRecordingSegment);
-                    console.log('📊 Recording segment type:', currentRecordingSegment?.constructor?.name);
-                    console.log('📏 Recording segment size:', currentRecordingSegment?.size, 'bytes');
-                    
-                    setIsLocked(true);
-                    
-                    // If recording is active, stop it and get the latest recording
-                    if (isRecording && stopRecording && getLatestRecording) {
-                      console.log('🛑 Stopping recording to capture audio...');
-                      const latestRecording = await getLatestRecording();
-                      console.log('🎵 Latest recording captured:', latestRecording);
-                      console.log('📏 Latest recording size:', latestRecording?.size, 'bytes');
-                      
-                      if (onSlideLockTriggered) {
-                        onSlideLockTriggered(pageNumber, latestRecording);
-                      }
-                    } else {
-                      // No active recording, proceed with existing segment
-                      if (onSlideLockTriggered) {
-                        onSlideLockTriggered(pageNumber, currentRecordingSegment);
-                      }
-                    }
-                  }}
-                >
-                  Ready for questions? 🤔
-                </button>
-              </div>
-            )}
+          </div>
+        )}
+      </div>
+
+      <div className="recording-section">
+        {!isRecording && !isPaused ? (
+          <button 
+            onClick={startRecording} 
+            className="recording-button start"
+          >
+            🎤 Start Recording
+          </button>
+        ) : (
+          <div className="recording-controls">
+            <button 
+              onClick={stopRecording} 
+              className="recording-button stop"
+            >
+              ⏹️ End Recording
+            </button>
+            {isPaused ? (
+              <button 
+                onClick={resumeRecording} 
+                className="recording-button resume"
+              >
+                ▶️ Resume Recording
+              </button>
+            ) : null}
+            <div className="recording-status">
+              <span className={`recording-indicator ${isPaused ? 'paused' : 'active'}`}>
+                {isPaused ? '⏸️' : '🔴'}
+              </span>
+              <span className="recording-time">{formatTime(recordingTime)}</span>
+              {isPaused && (
+                <span className="pause-reason">Paused - Slide Locked</span>
+              )}
+            </div>
+          </div>
+        )}
+        {currentRecordingSegment && (
+          <div className="audio-playback">
+            <p>Latest Recording Segment:</p>
+            <audio controls>
+              <source src={URL.createObjectURL(currentRecordingSegment)} type="audio/wav" />
+            </audio>
           </div>
         )}
       </div>
