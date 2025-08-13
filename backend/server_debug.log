@@ -1,0 +1,373 @@
+✅ Audio processing available
+✅ PDF processing available
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.1.236:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 130-091-692
+127.0.0.1 - - [12/Aug/2025 23:42:22] "GET /api/debug-image/1ecc3120-61aa-400f-9c06-ed369512d1bc/1?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:42:27] "HEAD /api/slide-image/1ecc3120-61aa-400f-9c06-ed369512d1bc/1?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:42:37] "HEAD /api/slide-image/1ecc3120-61aa-400f-9c06-ed369512d1bc/1?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:42:37] "HEAD /api/slide-image/1ecc3120-61aa-400f-9c06-ed369512d1bc/1?type=full HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:42:37] "HEAD /api/slide-image/1ecc3120-61aa-400f-9c06-ed369512d1bc/2?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:42:37] "HEAD /api/slide-image/1ecc3120-61aa-400f-9c06-ed369512d1bc/2?type=full HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:42:37] "HEAD /api/slide-image/1ecc3120-61aa-400f-9c06-ed369512d1bc/3?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:42:37] "HEAD /api/slide-image/1ecc3120-61aa-400f-9c06-ed369512d1bc/3?type=full HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:42:37] "HEAD /api/slide-image/1ecc3120-61aa-400f-9c06-ed369512d1bc/4?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:42:37] "HEAD /api/slide-image/1ecc3120-61aa-400f-9c06-ed369512d1bc/4?type=full HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:42:37] "HEAD /api/audio-segment/23eb1cb1-6d5f-49a8-aa49-4721f04e8374/1 HTTP/1.1" 200 -
+ * Detected change in '/Users/parthshah/Desktop/projects/ai-math-tutor/backend/app.py', reloading
+✅ Audio processing available
+✅ PDF processing available
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 130-091-692
+127.0.0.1 - - [12/Aug/2025 23:43:48] "POST /api/process-upload HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:43:59] "OPTIONS /api/assignments/uploaded_ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3_airbnb-shortened.pdf/slides HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:43:59] "POST /api/assignments/uploaded_ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3_airbnb-shortened.pdf/slides HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:44:04] "POST /api/chat HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:44:10] "OPTIONS /api/chat HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:44:12] "POST /api/chat HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:44:54] "POST /api/feedback HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:45:00] "GET /api/slide-image/ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3/2?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:45:00] "GET /api/slide-image/ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3/1?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:45:00] "GET /api/slide-image/ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3/3?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:45:00] "GET /api/slide-image/ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3/4?type=thumbnail HTTP/1.1" 200 -
+ * Detected change in '/Users/parthshah/Desktop/projects/ai-math-tutor/backend/test_audio_splitting.py', reloading
+✅ Audio processing available
+✅ PDF processing available
+📁 Saved uploaded PDF to: /Users/parthshah/Desktop/projects/ai-math-tutor/backend/assignments/uploaded_ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3_airbnb-shortened.pdf
+📄 Starting PDF processing: /Users/parthshah/Desktop/projects/ai-math-tutor/backend/assignments/uploaded_ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3_airbnb-shortened.pdf
+📁 PDF file exists: True
+📏 PDF file size: 214843 bytes
+📁 Session directory created: slide_images/ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3
+📄 Converting PDF to images: /Users/parthshah/Desktop/projects/ai-math-tutor/backend/assignments/uploaded_ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3_airbnb-shortened.pdf
+✅ PDF conversion successful: 4 pages
+📷 Processing slide 1...
+✅ Saved slide 1
+📷 Processing slide 2...
+✅ Saved slide 2
+📷 Processing slide 3...
+✅ Saved slide 3
+📷 Processing slide 4...
+✅ Saved slide 4
+✅ Successfully converted 4 slides
+📄 Detected 4 pages in PDF
+🌐 API /chat endpoint called
+📋 Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryEYUMLNZFK2K23WSr
+🎵 Multipart request detected - checking for audio...
+🎙️ Audio file received: recording.wav
+📏 Audio file size: 0 bytes
+💾 Audio saved to temporary file: /var/folders/t9/90kgxqcx6wd2x1bhj5m1d0wm0000gn/T/tmp8x02dgc7.wav
+🔊 Starting audio transcription with Whisper...
+✅ Audio transcription successful!
+📝 Transcription: Testing one, testing two, testing three, testing four.
+
+🗑️ Temporary audio file cleaned up
+🤖 AI service called
+📄 PDF context provided: True
+🎙️ Audio transcription provided: True
+📝 Transcription length: 55 characters
+📝 Transcription preview: Testing one, testing two, testing three, testing four.
+...
+🎯 Adding audio transcription to AI context!
+🌐 API /chat endpoint called
+📋 Content-Type: application/json
+🤖 AI service called
+📄 PDF context provided: True
+🎙️ Audio transcription provided: False
+📝 API /feedback endpoint called
+📋 Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryxkDAj9eQrlgpVfS0
+🎵 Multipart request with recording detected...
+📊 Slide timestamps received: [{'slideNumber': 1, 'timestamp': 0}, {'slideNumber': 2, 'timestamp': 1.256}, {'slideNumber': 3, 'timestamp': 2.057}, {'slideNumber': 4, 'timestamp': 2.957}]
+📄 PDF slide count received: 4
+📄 PDF session ID received: ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3
+🎙️ Recording file received: presentation.wav
+📝 Generating slide-specific feedback...
+💬 Conversation messages: 5
+📄 Slide content provided: True
+🎙️ Presentation recording provided: True
+📊 Slide timestamps provided: 4
+📊 Detailed timestamps: [{'slideNumber': 1, 'timestamp': 0}, {'slideNumber': 2, 'timestamp': 1.256}, {'slideNumber': 3, 'timestamp': 2.057}, {'slideNumber': 4, 'timestamp': 2.957}]
+  - Timestamp 0: Slide 1, Time: 0s
+  - Timestamp 1: Slide 2, Time: 1.256s
+  - Timestamp 2: Slide 3, Time: 2.057s
+  - Timestamp 3: Slide 4, Time: 2.957s
+📄 PDF session ID: ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3
+📄 PDF slide count: 4
+🔊 Processing slide-specific audio segments...
+🔧 DEBUG: About to split audio with 4 timestamps
+❌ Audio splitting failed: Decoding failed. ffmpeg returned error code: 183
+
+Output from ffmpeg/avlib:
+
+ffmpeg version 7.1.1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/7.1.1_3 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libharfbuzz --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      59. 39.100 / 59. 39.100
+  libavcodec     61. 19.101 / 61. 19.101
+  libavformat    61.  7.100 / 61.  7.100
+  libavdevice    61.  3.100 / 61.  3.100
+  libavfilter    10.  4.100 / 10.  4.100
+  libswscale      8.  3.100 /  8.  3.100
+  libswresample   5.  3.100 /  5.  3.100
+  libpostproc    58.  3.100 / 58.  3.100
+[wav @ 0x7fda43004e40] invalid start code [26]E[223][163] in RIFF header
+[in#0 @ 0x7fda43004d00] Error opening input: Invalid data found when processing input
+Error opening input file /var/folders/t9/90kgxqcx6wd2x1bhj5m1d0wm0000gn/T/tmpt_jbkzxc.wav.
+Error opening input files: Invalid data found when processing input
+
+🔧 DEBUG: split_audio_by_timestamps returned 1 segments
+⚠️ Audio splitting returned only one segment, treating as full audio
+📝 Created fake segment for slide 1: 12 chars
+📝 Created fake segment for slide 2: 12 chars
+📝 Created fake segment for slide 3: 14 chars
+📝 Created fake segment for slide 4: 13 chars
+📊 Final actual slide count: 4
+📊 Generating per-slide feedback for 4 slides based on timestamps
+📊 Slide timestamps (filtered): [{'slideNumber': 1, 'timestamp': 0}, {'slideNumber': 2, 'timestamp': 1.256}, {'slideNumber': 3, 'timestamp': 2.057}, {'slideNumber': 4, 'timestamp': 2.957}]
+📊 Audio transcripts available for slides: [1, 2, 3, 4]
+📊 Processing slide 1 (index 0)
+📊 Using audio transcript for slide 1
+✅ Successfully generated feedback for slide 1
+📊 Processing slide 2 (index 1)
+📊 Using audio transcript for slide 2
+✅ Successfully generated feedback for slide 2
+📊 Processing slide 3 (index 2)
+📊 Using audio transcript for slide 3
+✅ Successfully generated feedback for slide 3
+📊 Processing slide 4 (index 3)
+📊 Using audio transcript for slide 4
+✅ Successfully generated feedback for slide 4
+📊 Session IDs:
+  - Feedback session (audio): 5857cf17-8914-4274-a195-ab7909edf59e
+  - Image session (PDF): ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3
+🔧 DEBUG: slide_audio_transcripts length: 4
+🔧 DEBUG: original_audio_segments length: 0
+⚠️ Audio transcripts available but no segments to save
+🔧 DEBUG: Transcript keys: [1, 2, 3, 4]
+📊 Building slide 1 data:
+  - Has audio: False
+  - Audio saved at: Not saved
+  - Audio URL: None
+  - Image URL: /api/slide-image/ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3/1?type=thumbnail
+  - Image session: ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3
+  - Audio session: 5857cf17-8914-4274-a195-ab7909edf59e
+📊 Building slide 2 data:
+  - Has audio: False
+  - Audio saved at: Not saved
+  - Audio URL: None
+  - Image URL: /api/slide-image/ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3/2?type=thumbnail
+  - Image session: ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3
+  - Audio session: 5857cf17-8914-4274-a195-ab7909edf59e
+📊 Building slide 3 data:
+  - Has audio: False
+  - Audio saved at: Not saved
+  - Audio URL: None
+  - Image URL: /api/slide-image/ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3/3?type=thumbnail
+  - Image session: ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3
+  - Audio session: 5857cf17-8914-4274-a195-ab7909edf59e
+📊 Building slide 4 data:
+  - Has audio: False
+  - Audio saved at: Not saved
+  - Audio URL: None
+  - Image URL: /api/slide-image/ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3/4?type=thumbnail
+  - Image session: ca4fba7f-e13b-46d0-a237-cb4a40d4e8a3
+  - Audio session: 5857cf17-8914-4274-a195-ab7909edf59e
+✅ Structured feedback generated for 4 slides
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 130-091-692
+127.0.0.1 - - [12/Aug/2025 23:51:21] "HEAD /api/audio-segment/5e6fd9fe-8a2f-4635-8189-1f1ee6934c02/1 HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:51:25] "HEAD /api/audio-segment/5e6fd9fe-8a2f-4635-8189-1f1ee6934c02/4 HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:52:11] "POST /api/process-upload HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:52:18] "OPTIONS /api/assignments/uploaded_331811ef-8593-49ba-b8a7-acfadb36c9f6_airbnb-shortened.pdf/slides HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:52:18] "POST /api/assignments/uploaded_331811ef-8593-49ba-b8a7-acfadb36c9f6_airbnb-shortened.pdf/slides HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:52:22] "POST /api/chat HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:52:25] "OPTIONS /api/chat HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:52:28] "POST /api/chat HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:53:04] "POST /api/feedback HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:53:13] "GET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/2?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:53:13] "GET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/1?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:53:13] "GET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/3?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:53:13] "GET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/4?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [12/Aug/2025 23:53:15] "[36mGET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/1?type=thumbnail HTTP/1.1[0m" 304 -
+127.0.0.1 - - [12/Aug/2025 23:53:15] "[36mGET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/2?type=thumbnail HTTP/1.1[0m" 304 -
+127.0.0.1 - - [12/Aug/2025 23:53:15] "[36mGET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/3?type=thumbnail HTTP/1.1[0m" 304 -
+127.0.0.1 - - [12/Aug/2025 23:53:15] "[36mGET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/4?type=thumbnail HTTP/1.1[0m" 304 -
+ * Detected change in '/Users/parthshah/Desktop/projects/ai-math-tutor/backend/feedback_service.py', reloading
+✅ Audio processing available
+✅ PDF processing available
+📁 Saved uploaded PDF to: /Users/parthshah/Desktop/projects/ai-math-tutor/backend/assignments/uploaded_331811ef-8593-49ba-b8a7-acfadb36c9f6_airbnb-shortened.pdf
+📄 Starting PDF processing: /Users/parthshah/Desktop/projects/ai-math-tutor/backend/assignments/uploaded_331811ef-8593-49ba-b8a7-acfadb36c9f6_airbnb-shortened.pdf
+📁 PDF file exists: True
+📏 PDF file size: 214843 bytes
+📁 Session directory created: slide_images/331811ef-8593-49ba-b8a7-acfadb36c9f6
+📄 Converting PDF to images: /Users/parthshah/Desktop/projects/ai-math-tutor/backend/assignments/uploaded_331811ef-8593-49ba-b8a7-acfadb36c9f6_airbnb-shortened.pdf
+✅ PDF conversion successful: 4 pages
+📷 Processing slide 1...
+✅ Saved slide 1
+📷 Processing slide 2...
+✅ Saved slide 2
+📷 Processing slide 3...
+✅ Saved slide 3
+📷 Processing slide 4...
+✅ Saved slide 4
+✅ Successfully converted 4 slides
+📄 Detected 4 pages in PDF
+🌐 API /chat endpoint called
+📋 Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryLwJj3LGsIPjQbKcP
+🎵 Multipart request detected - checking for audio...
+🎙️ Audio file received: recording.wav
+📏 Audio file size: 0 bytes
+💾 Audio saved to temporary file: /var/folders/t9/90kgxqcx6wd2x1bhj5m1d0wm0000gn/T/tmp47qgl9nq.wav
+🔊 Starting audio transcription with Whisper...
+✅ Audio transcription successful!
+📝 Transcription: Test 1, test 2, test 3, test 4, test 5, test 6, test 7, test 8, test 9, test 10, test 11,
+
+🗑️ Temporary audio file cleaned up
+🤖 AI service called
+📄 PDF context provided: True
+🎙️ Audio transcription provided: True
+📝 Transcription length: 90 characters
+📝 Transcription preview: Test 1, test 2, test 3, test 4, test 5, test 6, test 7, test 8, test 9, test 10, test 11,
+...
+🎯 Adding audio transcription to AI context!
+🌐 API /chat endpoint called
+📋 Content-Type: application/json
+🤖 AI service called
+📄 PDF context provided: True
+🎙️ Audio transcription provided: False
+📝 API /feedback endpoint called
+📋 Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryYWqEI7IyrBoIhysM
+🎵 Multipart request with recording detected...
+📊 Slide timestamps received: [{'slideNumber': 1, 'timestamp': 0}, {'slideNumber': 2, 'timestamp': 1.757}, {'slideNumber': 3, 'timestamp': 2.561}, {'slideNumber': 4, 'timestamp': 3.378}]
+📄 PDF slide count received: 4
+📄 PDF session ID received: 331811ef-8593-49ba-b8a7-acfadb36c9f6
+🎙️ Recording file received: presentation.wav
+📝 Generating slide-specific feedback...
+💬 Conversation messages: 5
+📄 Slide content provided: True
+🎙️ Presentation recording provided: True
+📊 Slide timestamps provided: 4
+📊 Detailed timestamps: [{'slideNumber': 1, 'timestamp': 0}, {'slideNumber': 2, 'timestamp': 1.757}, {'slideNumber': 3, 'timestamp': 2.561}, {'slideNumber': 4, 'timestamp': 3.378}]
+  - Timestamp 0: Slide 1, Time: 0s
+  - Timestamp 1: Slide 2, Time: 1.757s
+  - Timestamp 2: Slide 3, Time: 2.561s
+  - Timestamp 3: Slide 4, Time: 3.378s
+📄 PDF session ID: 331811ef-8593-49ba-b8a7-acfadb36c9f6
+📄 PDF slide count: 4
+🔊 Processing slide-specific audio segments...
+🔧 DEBUG: About to split audio with 4 timestamps
+❌ Audio splitting failed: Decoding failed. ffmpeg returned error code: 183
+
+Output from ffmpeg/avlib:
+
+ffmpeg version 7.1.1 Copyright (c) 2000-2025 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/7.1.1_3 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags='-Wl,-ld_classic' --enable-ffplay --enable-gnutls --enable-gpl --enable-libaom --enable-libaribb24 --enable-libbluray --enable-libdav1d --enable-libharfbuzz --enable-libjxl --enable-libmp3lame --enable-libopus --enable-librav1e --enable-librist --enable-librubberband --enable-libsnappy --enable-libsrt --enable-libssh --enable-libsvtav1 --enable-libtesseract --enable-libtheora --enable-libvidstab --enable-libvmaf --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libxvid --enable-lzma --enable-libfontconfig --enable-libfreetype --enable-frei0r --enable-libass --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libspeex --enable-libsoxr --enable-libzmq --enable-libzimg --disable-libjack --disable-indev=jack --enable-videotoolbox --enable-audiotoolbox
+  libavutil      59. 39.100 / 59. 39.100
+  libavcodec     61. 19.101 / 61. 19.101
+  libavformat    61.  7.100 / 61.  7.100
+  libavdevice    61.  3.100 / 61.  3.100
+  libavfilter    10.  4.100 / 10.  4.100
+  libswscale      8.  3.100 /  8.  3.100
+  libswresample   5.  3.100 /  5.  3.100
+  libpostproc    58.  3.100 / 58.  3.100
+[wav @ 0x7fb0cfa04840] invalid start code [26]E[223][163] in RIFF header
+[in#0 @ 0x7fb0cfa04700] Error opening input: Invalid data found when processing input
+Error opening input file /var/folders/t9/90kgxqcx6wd2x1bhj5m1d0wm0000gn/T/tmp3al_4ru4.wav.
+Error opening input files: Invalid data found when processing input
+
+🔧 DEBUG: split_audio_by_timestamps returned 1 segments
+⚠️ Audio splitting returned only one segment, treating as full audio
+📝 Created fake segment for slide 1: 20 chars
+📝 Created fake segment for slide 2: 18 chars
+📝 Created fake segment for slide 3: 20 chars
+📝 Created fake segment for slide 4: 28 chars
+📊 Final actual slide count: 4
+📊 Generating per-slide feedback for 4 slides based on timestamps
+📊 Slide timestamps (filtered): [{'slideNumber': 1, 'timestamp': 0}, {'slideNumber': 2, 'timestamp': 1.757}, {'slideNumber': 3, 'timestamp': 2.561}, {'slideNumber': 4, 'timestamp': 3.378}]
+📊 Audio transcripts available for slides: [1, 2, 3, 4]
+📊 Processing slide 1 (index 0)
+📊 Using audio transcript for slide 1
+✅ Successfully generated feedback for slide 1
+📊 Processing slide 2 (index 1)
+📊 Using audio transcript for slide 2
+✅ Successfully generated feedback for slide 2
+📊 Processing slide 3 (index 2)
+📊 Using audio transcript for slide 3
+✅ Successfully generated feedback for slide 3
+📊 Processing slide 4 (index 3)
+📊 Using audio transcript for slide 4
+✅ Successfully generated feedback for slide 4
+📊 Session IDs:
+  - Feedback session (audio): 3a003a12-7880-4913-b8cf-7c73c6fcbe4d
+  - Image session (PDF): 331811ef-8593-49ba-b8a7-acfadb36c9f6
+🔧 DEBUG: slide_audio_transcripts length: 4
+🔧 DEBUG: original_audio_segments length: 0
+⚠️ Audio transcripts available but no segments to save
+🔧 DEBUG: Transcript keys: [1, 2, 3, 4]
+📊 Building slide 1 data:
+  - Has audio: False
+  - Audio saved at: Not saved
+  - Audio URL: None
+  - Image URL: /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/1?type=thumbnail
+  - Image session: 331811ef-8593-49ba-b8a7-acfadb36c9f6
+  - Audio session: 3a003a12-7880-4913-b8cf-7c73c6fcbe4d
+📊 Building slide 2 data:
+  - Has audio: False
+  - Audio saved at: Not saved
+  - Audio URL: None
+  - Image URL: /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/2?type=thumbnail
+  - Image session: 331811ef-8593-49ba-b8a7-acfadb36c9f6
+  - Audio session: 3a003a12-7880-4913-b8cf-7c73c6fcbe4d
+📊 Building slide 3 data:
+  - Has audio: False
+  - Audio saved at: Not saved
+  - Audio URL: None
+  - Image URL: /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/3?type=thumbnail
+  - Image session: 331811ef-8593-49ba-b8a7-acfadb36c9f6
+  - Audio session: 3a003a12-7880-4913-b8cf-7c73c6fcbe4d
+📊 Building slide 4 data:
+  - Has audio: False
+  - Audio saved at: Not saved
+  - Audio URL: None
+  - Image URL: /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/4?type=thumbnail
+  - Image session: 331811ef-8593-49ba-b8a7-acfadb36c9f6
+  - Audio session: 3a003a12-7880-4913-b8cf-7c73c6fcbe4d
+✅ Structured feedback generated for 4 slides
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 130-091-692
+127.0.0.1 - - [12/Aug/2025 23:57:20] "[36mGET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/1?type=thumbnail HTTP/1.1[0m" 304 -
+127.0.0.1 - - [12/Aug/2025 23:57:20] "[36mGET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/2?type=thumbnail HTTP/1.1[0m" 304 -
+127.0.0.1 - - [12/Aug/2025 23:57:20] "[36mGET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/3?type=thumbnail HTTP/1.1[0m" 304 -
+127.0.0.1 - - [12/Aug/2025 23:57:20] "[36mGET /api/slide-image/331811ef-8593-49ba-b8a7-acfadb36c9f6/4?type=thumbnail HTTP/1.1[0m" 304 -
+ * Detected change in '/Users/parthshah/Desktop/projects/ai-math-tutor/backend/feedback_service.py', reloading
+✅ Audio processing available
+✅ PDF processing available
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 130-091-692
+127.0.0.1 - - [13/Aug/2025 00:06:26] "POST /api/process-upload HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2025 00:06:37] "OPTIONS /api/assignments/uploaded_52d48fae-1d9b-4a25-8f73-204947daac62_airbnb-shortened.pdf/slides HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2025 00:06:37] "POST /api/assignments/uploaded_52d48fae-1d9b-4a25-8f73-204947daac62_airbnb-shortened.pdf/slides HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2025 00:06:41] "POST /api/chat HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2025 00:06:45] "OPTIONS /api/chat HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2025 00:06:47] "POST /api/chat HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2025 00:07:28] "POST /api/feedback HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2025 00:07:34] "GET /api/slide-image/52d48fae-1d9b-4a25-8f73-204947daac62/1?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2025 00:07:34] "GET /api/slide-image/52d48fae-1d9b-4a25-8f73-204947daac62/4?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2025 00:07:34] "GET /api/slide-image/52d48fae-1d9b-4a25-8f73-204947daac62/3?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2025 00:07:34] "GET /api/slide-image/52d48fae-1d9b-4a25-8f73-204947daac62/2?type=thumbnail HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2025 00:07:34] "[35m[1mGET /api/audio-segment/f94a803b-d754-4ffd-9c5b-45197ea2bd85/1 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [13/Aug/2025 00:07:34] "[35m[1mGET /api/audio-segment/f94a803b-d754-4ffd-9c5b-45197ea2bd85/2 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [13/Aug/2025 00:07:34] "[35m[1mGET /api/audio-segment/f94a803b-d754-4ffd-9c5b-45197ea2bd85/3 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [13/Aug/2025 00:07:34] "[35m[1mGET /api/audio-segment/f94a803b-d754-4ffd-9c5b-45197ea2bd85/4 HTTP/1.1[0m" 206 -
+127.0.0.1 - - [13/Aug/2025 00:07:37] "[35m[1mGET /api/audio-segment/f94a803b-d754-4ffd-9c5b-45197ea2bd85/1 HTTP/1.1[0m" 206 -
