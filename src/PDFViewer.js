@@ -6,7 +6,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 // Use the local worker from public directory
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
-function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, onSlideAdvance, currentRecordingSegment, isRecording, stopRecording, getLatestRecording, onSlideTimestampsChange }) {
+function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, onSlideAdvance, currentRecordingSegment, isRecording, isPaused, startRecording, stopRecording, pauseRecording, resumeRecording, recordingTime, formatTime, getLatestRecording, onSlideTimestampsChange }) {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [numPages, setNumPages] = useState(null);
@@ -356,6 +356,51 @@ function PDFViewer({ onAssignmentChange, onSlideLockTriggered, autoUnlockReady, 
                 />
               )}
             </Document>
+          </div>
+        )}
+      </div>
+
+      <div className="recording-section">
+        {!isRecording && !isPaused ? (
+          <button 
+            onClick={startRecording} 
+            className="recording-button start"
+          >
+            🎤 Start Recording
+          </button>
+        ) : (
+          <div className="recording-controls">
+            <button 
+              onClick={stopRecording} 
+              className="recording-button stop"
+            >
+              ⏹️ End Recording
+            </button>
+            {isPaused ? (
+              <button 
+                onClick={resumeRecording} 
+                className="recording-button resume"
+              >
+                ▶️ Resume Recording
+              </button>
+            ) : null}
+            <div className="recording-status">
+              <span className={`recording-indicator ${isPaused ? 'paused' : 'active'}`}>
+                {isPaused ? '⏸️' : '🔴'}
+              </span>
+              <span className="recording-time">{formatTime(recordingTime)}</span>
+              {isPaused && (
+                <span className="pause-reason">Paused - Slide Locked</span>
+              )}
+            </div>
+          </div>
+        )}
+        {currentRecordingSegment && (
+          <div className="audio-playback">
+            <p>Latest Recording Segment:</p>
+            <audio controls>
+              <source src={URL.createObjectURL(currentRecordingSegment)} type="audio/wav" />
+            </audio>
           </div>
         )}
       </div>

@@ -168,6 +168,8 @@ def generate_pitch_feedback():
             
             import json
             conversation_history = json.loads(messages_json)
+            print(f"📝 Received {len(conversation_history)} messages in conversation")
+            print(f"📝 Messages types: {[msg.get('role') for msg in conversation_history[:5]]}")
             selected_assignment = request.form.get('selectedAssignment')
             pdf_session_id = request.form.get('pdfSessionId')
             

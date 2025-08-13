@@ -261,51 +261,6 @@ function ChatApp() {
                 </button>
               </div>
             </div>
-            
-            <div className="recording-section">
-              {!isRecording && !isPaused ? (
-                <button 
-                  onClick={startRecording} 
-                  className="recording-button start"
-                >
-                  🎤 Start Recording
-                </button>
-              ) : (
-                <div className="recording-controls">
-                  <button 
-                    onClick={stopRecording} 
-                    className="recording-button stop"
-                  >
-                    ⏹️ End Recording
-                  </button>
-                  {isPaused ? (
-                    <button 
-                      onClick={resumeRecording} 
-                      className="recording-button resume"
-                    >
-                      ▶️ Resume Recording
-                    </button>
-                  ) : null}
-                  <div className="recording-status">
-                    <span className={`recording-indicator ${isPaused ? 'paused' : 'active'}`}>
-                      {isPaused ? '⏸️' : '🔴'}
-                    </span>
-                    <span className="recording-time">{formatTime(recordingTime)}</span>
-                    {isPaused && (
-                      <span className="pause-reason">Paused - Slide Locked</span>
-                    )}
-                  </div>
-                </div>
-              )}
-              {currentRecordingSegment && (
-                <div className="audio-playback">
-                  <p>Latest Recording Segment:</p>
-                  <audio controls>
-                    <source src={URL.createObjectURL(currentRecordingSegment)} type="audio/wav" />
-                  </audio>
-                </div>
-              )}
-            </div>
             </div>
     </div>
   );
@@ -757,7 +712,13 @@ function App() {
                     onSlideAdvance={handleSlideAdvance}
                     currentRecordingSegment={currentRecordingSegment}
                     isRecording={isRecording}
+                    isPaused={isPaused}
+                    startRecording={startRecording}
                     stopRecording={stopRecording}
+                    pauseRecording={pauseRecording}
+                    resumeRecording={resumeRecording}
+                    recordingTime={recordingTime}
+                    formatTime={formatTime}
                     getLatestRecording={getLatestRecording}
                     onSlideTimestampsChange={handleSlideTimestampsChange}
                   />
