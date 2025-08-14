@@ -183,6 +183,21 @@ ai-math-tutor/
 - Python 3.8+
 - Node.js 14+
 - OpenAI API key
+- Homebrew (for macOS dependencies)
+
+### macOS System Dependencies (via Homebrew)
+
+**Essential brew installs required for the app to work:**
+```bash
+# Core dependencies for PDF processing and audio handling
+brew install poppler ffmpeg
+
+# Python (if not already installed)
+brew install python@3.11
+
+# Node.js (if not already installed) 
+brew install node
+```
 
 ### Backend Setup
 
@@ -191,22 +206,31 @@ ai-math-tutor/
 pip install -r requirements.txt
 ```
 
-2. Create `.env` file in project root:
+2. **Install additional required Python packages** (these are essential for the app to work):
+```bash
+pip install pdf2image pillow PyPDF2 pydub
+```
+
+3. **Install system dependencies** (required for PDF and audio processing):
+
+**macOS:**
+```bash
+brew install poppler ffmpeg
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install poppler-utils ffmpeg
+```
+
+**Windows:**
+- Download and install [poppler](https://github.com/oschwartz10612/poppler-windows/releases/) 
+- Download and install [FFmpeg](https://ffmpeg.org/download.html)
+- Add both to your system PATH
+
+4. Create `.env` file in project root:
 ```
 OPENAI_API_KEY=your_api_key_here
-```
-
-3. Install additional system dependencies (if needed):
-```bash
-# For PDF image extraction
-pip install pdf2image pillow
-
-# For audio processing
-pip install pydub
-
-# May require system packages:
-# Ubuntu/Debian: apt-get install poppler-utils ffmpeg
-# macOS: brew install poppler ffmpeg
 ```
 
 ### Frontend Setup
