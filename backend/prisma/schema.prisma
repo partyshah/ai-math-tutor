@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-py"
+  interface = "sync"
+  recursive_type_depth = -1
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id         String       @id @default(cuid())
+  name       String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  sessions   Session[]
+}
+
+model Session {
+  id           String            @id @default(cuid())
+  studentId    String
+  slideCount   Int?
+  pdfUrl       String?
+  status       String?        // "created" | "processing" | "completed"
+  createdAt    DateTime       @default(now())
+  completedAt  DateTime?
+
+  student      Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+  feedback      Feedback?
+}
+
+model Conversation {
+  id          String       @id @default(cuid())
+  sessionId   String
+  role        String    // "student" | "assistant"
+  content     String
+  slideNumber Int?
+  timestamp   DateTime
+  createdAt   DateTime  @default(now())
+
+  session     Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Feedback {
+  id                 String       @id @default(cuid())
+  sessionId          String       @unique
+  slideFeedback      String?   // optional blob of per-slide notes
+  overallFeedback    String?
+  presentationScore  Int?
+  strengths          String?
+  improvements       String?
+  viewedByProfessor  Boolean   @default(false)
+  viewedAt           DateTime?
+  createdAt          DateTime  @default(now())
+
+  session            Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
