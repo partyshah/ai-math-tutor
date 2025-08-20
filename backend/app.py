@@ -1,16 +1,20 @@
+from dis import disco
 import os
 import tempfile
-from flask import Flask, request, jsonify, send_file, g
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-from services.db import db
+from services.db import connect_db, disconnect_db
 from services.database_service import (
     create_student,
     create_session,
-    save_feedback,
+    update_session,
     list_sessions,
     get_session,
+    save_feedback,
+    add_conversation,
+    add_conversations_bulk,
 )
 from ai_service import chat_with_ai, transcribe_audio
 from pdf_utils import get_assignment_text, get_assignment_slides_range
@@ -21,6 +25,7 @@ from pdf_image_service import (
     cleanup_old_sessions,
 )
 from feedback_service import get_audio_segment_path, cleanup_old_audio_sessions
+from helpers.request_helpers import bad_request, not_found, ok, parse_int
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
@@ -28,138 +33,385 @@ app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
 # CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
 # connect immediately when app starts
-db.connect()
+
+
+@app.before_request
+def db_connections():
+    connect_db()
 
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
-    if db.is_connected():
-        db.disconnect()
+    disconnect_db()
 
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "has_openai": bool(os.environ.get("OPENAI_API_KEY"))}
+    return {
+        "ok": True,
+        "env": os.environ.get("FLASK_ENV", "development"),
+    }
 
 
-# --- Minimal endpoints to unblock flows ---
+# --- SESSIONS ---
+# TODO: Complete API endpoints for session management
 @app.post("/api/session/create")
 def api_create_session():
-    data = request.get_json(force=True)
-    name = data.get("studentName")
-    slide_count = data.get("slideCount")
+    """
+    Body: { studentName: string, slideCount?: number, pdfUrl?: string }
+    Resp: { sessionId, studentId }
+    """
+    data = request.get_json(silent=True) or {}
+    name = (data.get("studentName") or "").strip()
+    if len(name) < 2:
+        return bad_request("studentName (min 2 chars) is required")
+
+    try:
+        slide_count = parse_int(data.get("slideCount"), "slideCount")
+    except ValueError as e:
+        return bad_request(str(e))
+
     pdf_url = data.get("pdfUrl")
-
-    if not name:
-        return jsonify({"error": "studentName is required"}), 400
-
-    # dev shortcut: create-by-name
     student = create_student(name)
     sess = create_session(student.id, slide_count, pdf_url)
-    return jsonify({"sessionId": sess.id, "studentId": student.id}), 201
+    return ok({"sessionId": sess.id, "studentId": student.id}, 201)
 
 
+# ---------- student app can patch session metadata (slide count, status, pdfUrl) ----------
+@app.patch("/api/session/<session_id>")
+def api_patch_session(session_id: str):
+    """
+    Body: { slideCount?: number, status?: string, pdfUrl?: string, completedAt?: ISO }
+    """
+    data = request.get_json(silent=True) or {}
+    payload = {}
+    if "slideCount" in data:
+        try:
+            payload["slideCount"] = parse_int(data["slideCount"], "slideCount")
+        except ValueError as e:
+            return bad_request(str(e))
+    if "status" in data:
+        payload["status"] = data["status"]
+    if "pdfUrl" in data:
+        payload["pdfUrl"] = data["pdfUrl"]
+    if "completedAt" in data:
+        payload["completedAt"] = data["completedAt"]  # ISO string
+
+    if not payload:
+        return bad_request("No updatable fields provided")
+    updated = update_session(session_id, payload)
+    return ok(updated.dict())
+
+
+# ---------- log conversation turns (store chat/audio transcript) ----------
+@app.post("/api/session/<session_id>/conversations")
+def api_add_conversations(session_id: str):
+    """
+    Body (either form is accepted):
+      { role, content, slideNumber?, timestamp }  // single
+      { items: [ { sessionId?, role, content, slideNumber?, timestamp }, ... ] }  // bulk
+    """
+    data = request.get_json(silent=True) or {}
+
+    # Bulk path
+    if "items" in data and isinstance(data["items"], list):
+        items = []
+        for it in data["items"]:
+            role = (it.get("role") or "").strip()
+            content = (it.get("content") or "").strip()
+            if not role or not content:
+                return bad_request("Each item requires role and content")
+            items.append(
+                {
+                    "sessionId": it.get("sessionId") or session_id,
+                    "role": role,
+                    "content": content,
+                    "slideNumber": it.get("slideNumber"),
+                    "timestamp": it.get("timestamp") or it.get("time") or it.get("ts"),
+                }
+            )
+        res = add_conversations_bulk(items)
+        return ok({"count": res.count}, 201)
+
+    # Single path
+    role = (data.get("role") or "").strip()
+    content = (data.get("content") or "").strip()
+    if not role or not content:
+        return bad_request("role and content are required")
+    conv = add_conversation(
+        session_id=session_id,
+        role=role,
+        content=content,
+        slide_number=data.get("slideNumber"),
+        timestamp=data.get("timestamp") or data.get("time") or data.get("ts"),
+    )
+    return ok(conv.dict(), 201)
+
+
+# ---------- professor list & details ----------
 @app.get("/api/professor/sessions")
-def api_list_sessions():
-    sessions = list_sessions()
-    # prisma python returns model objects; .dict() gives JSONable data
-    return jsonify([s.dict() for s in sessions]), 200
+def api_list_sessions_route():
+    rows = list_sessions()
+    # very basic query params for FE convenience
+    q = (request.args.get("q") or "").lower().strip()
+    if q:
+        rows = [r for r in rows if r.student and q in r.student.name.lower()]
+    return ok([r.dict() for r in rows])
 
 
-@app.get("/api/professor/session/<int:session_id>")
-def api_get_session(session_id: int):
+@app.get("/api/professor/session/<session_id>")
+def api_get_session_route(session_id: str):
     s = get_session(session_id)
     if not s:
-        return jsonify({"error": "Not found"}), 404
-    return jsonify(s.dict()), 200
+        return not_found()
+    return ok(s.dict())
 
 
+# --------- Feedback ---------# ---------- persist feedback (immediately after generating on FE) ----------
 @app.post("/api/feedback")
-def api_save_feedback():
-    data = request.get_json(force=True)
+def api_save_feedback_route():
+    """
+    Body: {
+      sessionId: number, overallFeedback: string,
+      presentationScore?: number, slideFeedback?: string,
+      strengths?: string, improvements?: string
+    }
+    """
+    data = request.get_json(silent=True) or {}
     session_id = data.get("sessionId")
-    overall = data.get("overallFeedback", "")
-    score = data.get("presentationScore")
 
-    if not session_id:
-        return jsonify({"error": "sessionId is required"}), 400
+    if "sessionId" not in data or not session_id:
+        return bad_request("sessionId is required")
 
-    fb = save_feedback(session_id, overall, score)
-    return jsonify(fb.dict()), 201
+    try:
+        score = parse_int(data.get("presentationScore"), "presentationScore")
+    except ValueError as e:
+        return bad_request(str(e))
+
+    fb = save_feedback(
+        session_id=session_id,
+        overall_feedback=data.get("overallFeedback", "") or "",
+        presentation_score=score,
+        slide_feedback=data.get("slideFeedback"),
+        strengths=data.get("strengths"),
+        improvements=data.get("improvements"),
+    )
+    return ok(fb.dict(), 201)
 
 
-@app.route("/api/chat", methods=["POST"])
+# --------- Optional: mark feedback reviewed ---------
+# @app.put("/api/session/<int:session_id>/reviewed")
+# def api_mark_reviewed(session_id: int):
+#     """
+#     Marks a session's feedback as 'viewedByProfessor'
+#     """
+#     from services.db import db
+
+#     s = get_session(session_id)
+#     if not s:
+#         return not_found()
+
+#     # if no feedback yet, create a minimal record (or return 400)
+#     if not s.feedback:
+#         fb = db.feedback.create(
+#             {
+#                 "data": {
+#                     "sessionId": session_id,
+#                     "overallFeedback": "",
+#                     "presentationScore": None,
+#                     "viewedByProfessor": True,
+#                     "viewedAt": db.raw(
+#                         "NOW()"
+#                     ),  # Prisma Python supports raw for simple SQL, or set in code
+#                 }
+#             }
+#         )
+#         return ok(fb.dict())
+
+#     fb = db.feedback.update(
+#         {
+#             "where": {"id": s.feedback.id},
+#             "data": {"viewedByProfessor": True, "viewedAt": db.raw("NOW()")},
+#         }
+#     )
+#     return ok(fb.dict())
+
+# TODO: Let's break this into seperate endpoints on /chat for better clarity.
+@app.post("/api/chat")
 def chat():
+    """
+    Persists the student turn (and transcription if present), calls the AI,
+    then persists the assistant turn. Returns AI text.
+    Expected fields:
+      - messages: array (JSON or form field with JSON string)
+      - selectedAssignment: optional
+      - sessionId: required
+      - slideNumber: optional
+      - timestamp: optional ISO string
+      - audio: optional file (multipart only)
+    """
     try:
         print("🌐 API /chat endpoint called")
-        print(f"📋 Content-Type: {request.content_type}")
+        is_multipart = (
+            request.content_type and "multipart/form-data" in request.content_type
+        )
 
-        # Check if this is a multipart request (with audio file)
-        if request.content_type and "multipart/form-data" in request.content_type:
-            print("🎵 Multipart request detected - checking for audio...")
+        # ---- Parse inputs ----
+        if is_multipart:
+            import json, tempfile, os
 
-            # Handle multipart request with audio
             messages_json = request.form.get("messages")
             if not messages_json:
                 return jsonify({"error": "Messages are required"}), 400
-
-            import json
-
             messages = json.loads(messages_json)
-            selected_assignment = request.form.get("selectedAssignment")
 
-            # Handle audio file if present
+            selected_assignment = request.form.get("selectedAssignment")
+            session_id = request.form.get("sessionId")  # REQUIRED
+            slide_number = request.form.get("slideNumber")  # optional
+            timestamp = request.form.get("timestamp")  # optional
+
             audio_transcription = None
             if "audio" in request.files:
                 audio_file = request.files["audio"]
-                print(f"🎙️ Audio file received: {audio_file.filename}")
-                print(f"📏 Audio file size: {audio_file.content_length} bytes")
-
                 if audio_file and audio_file.filename:
-                    # Save audio file temporarily
                     with tempfile.NamedTemporaryFile(
                         delete=False, suffix=".wav"
-                    ) as temp_audio:
-                        audio_file.save(temp_audio.name)
-                        print(f"💾 Audio saved to temporary file: {temp_audio.name}")
-
+                    ) as tmp:
+                        audio_file.save(tmp.name)
                         try:
-                            # Transcribe audio
-                            print("🔊 Starting audio transcription with Whisper...")
-                            audio_transcription = transcribe_audio(temp_audio.name)
-                            print(f"✅ Audio transcription successful!")
-                            print(f"📝 Transcription: {audio_transcription}")
-                        except Exception as transcribe_error:
-                            print(f"❌ Transcription failed: {transcribe_error}")
+                            audio_transcription = transcribe_audio(tmp.name)
                         finally:
-                            # Clean up temporary file
-                            os.unlink(temp_audio.name)
-                            print("🗑️ Temporary audio file cleaned up")
-            else:
-                print("⚠️ No audio file found in multipart request")
-
+                            os.unlink(tmp.name)
         else:
-            # Handle regular JSON request
-            data = request.get_json()
+            data = request.get_json(force=True)
             messages = data.get("messages", [])
             selected_assignment = data.get("selectedAssignment")
+            session_id = data.get("sessionId")  # REQUIRED
+            slide_number = data.get("slideNumber")  # optional
+            timestamp = data.get("timestamp")  # optional
             audio_transcription = None
 
-            if not messages:
-                return jsonify({"error": "Messages are required"}), 400
+        if not messages:
+            return jsonify({"error": "Messages are required"}), 400
+        if not session_id:
+            return jsonify({"error": "sessionId is required"}), 400
 
-        # Extract PDF context if assignment is selected
-        pdf_context = None
-        if selected_assignment:
-            pdf_context = get_assignment_text(selected_assignment)
+        # ---- Persist student turn (last user/student message) ----
+        last_user = next(
+            (m for m in reversed(messages) if m.get("role") in ("user", "student")),
+            None,
+        )
+        student_text = (last_user or {}).get("content", "")
+        if audio_transcription:
+            student_text = (
+                f"{student_text}\n\n[Transcription]\n{audio_transcription}".strip()
+            )
+        if student_text:
+            add_conversation(
+                session_id=session_id,
+                role="student",
+                content=student_text,
+                slide_number=int(slide_number) if slide_number else None,
+                timestamp=timestamp,
+            )
 
-        ai_response = chat_with_ai(messages, pdf_context, audio_transcription)
+        # ---- Optional PDF context ----
+        pdf_context = (
+            get_assignment_text(selected_assignment) if selected_assignment else None
+        )
 
-        # Return simple response for entrepreneurship mentoring
-        return jsonify({"response": ai_response})
+        # ---- Call your AI service (existing helper) ----
+        ai_text = chat_with_ai(messages, pdf_context, audio_transcription)
+
+        # ---- Persist assistant turn ----
+        if ai_text:
+            add_conversation(
+                session_id=session_id,
+                role="assistant",
+                content=ai_text,
+                slide_number=int(slide_number) if slide_number else None,
+                timestamp=None,
+            )
+
+        return jsonify({"response": ai_text})
 
     except Exception as e:
+        print("❌ /api/chat failed:", e)
         return jsonify({"error": str(e)}), 500
+
+# TODO: Remove the commented-out chat function once the new one is tested more completely.
+# @app.route("/api/chat", methods=["POST"])
+# def chat():
+#     try:
+#         print("🌐 API /chat endpoint called")
+#         print(f"📋 Content-Type: {request.content_type}")
+
+#         # Check if this is a multipart request (with audio file)
+#         if request.content_type and "multipart/form-data" in request.content_type:
+#             print("🎵 Multipart request detected - checking for audio...")
+
+#             # Handle multipart request with audio
+#             messages_json = request.form.get("messages")
+#             if not messages_json:
+#                 return jsonify({"error": "Messages are required"}), 400
+
+#             import json
+
+#             messages = json.loads(messages_json)
+#             selected_assignment = request.form.get("selectedAssignment")
+
+#             # Handle audio file if present
+#             audio_transcription = None
+#             if "audio" in request.files:
+#                 audio_file = request.files["audio"]
+#                 print(f"🎙️ Audio file received: {audio_file.filename}")
+#                 print(f"📏 Audio file size: {audio_file.content_length} bytes")
+
+#                 if audio_file and audio_file.filename:
+#                     # Save audio file temporarily
+#                     with tempfile.NamedTemporaryFile(
+#                         delete=False, suffix=".wav"
+#                     ) as temp_audio:
+#                         audio_file.save(temp_audio.name)
+#                         print(f"💾 Audio saved to temporary file: {temp_audio.name}")
+
+#                         try:
+#                             # Transcribe audio
+#                             print("🔊 Starting audio transcription with Whisper...")
+#                             audio_transcription = transcribe_audio(temp_audio.name)
+#                             print(f"✅ Audio transcription successful!")
+#                             print(f"📝 Transcription: {audio_transcription}")
+#                         except Exception as transcribe_error:
+#                             print(f"❌ Transcription failed: {transcribe_error}")
+#                         finally:
+#                             # Clean up temporary file
+#                             os.unlink(temp_audio.name)
+#                             print("🗑️ Temporary audio file cleaned up")
+#             else:
+#                 print("⚠️ No audio file found in multipart request")
+
+#         else:
+#             # Handle regular JSON request
+#             data = request.get_json()
+#             messages = data.get("messages", [])
+#             selected_assignment = data.get("selectedAssignment")
+#             audio_transcription = None
+
+#             if not messages:
+#                 return jsonify({"error": "Messages are required"}), 400
+
+#         # Extract PDF context if assignment is selected
+#         pdf_context = None
+#         if selected_assignment:
+#             pdf_context = get_assignment_text(selected_assignment)
+
+#         ai_response = chat_with_ai(messages, pdf_context, audio_transcription)
+
+#         # Return simple response for entrepreneurship mentoring
+#         return jsonify({"response": ai_response})
+
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/assignments", methods=["GET"])
