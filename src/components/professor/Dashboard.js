@@ -1,6 +1,30 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { listProfessorSessions } from "../../services/api";
+import { useMemo, useState, useCallback } from "react";
 import SessionTable from "./SessionTable";
+import { listProfessorSessions } from "../../services/api";
+import { usePolling } from "../../hooks/usePolling";
+
+// inline icon (no extra deps)
+function RefreshIcon({ className = "" }) {
+	return (
+		<svg
+			className={className}
+			viewBox="0 0 24 24"
+			width="16"
+			height="16"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<polyline points="23 4 23 10 17 10" />
+			<polyline points="1 20 1 14 7 14" />
+			<path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10" />
+			<path d="M20.49 15a9 9 0 0 1-14.13 3.36L1 14" />
+		</svg>
+	);
+}
 
 export default function Dashboard() {
 	const [rows, setRows] = useState([]);
@@ -8,42 +32,54 @@ export default function Dashboard() {
 	const [error, setError] = useState("");
 
 	// UI state
-	const [query, setQuery] = useState(""); // search by student name
+	const [query, setQuery] = useState("");
 	const [sortField, setSortField] = useState("createdAt"); // 'student' | 'createdAt' | 'completedAt' | 'status' | 'feedback'
 	const [sortDir, setSortDir] = useState("desc"); // 'asc' | 'desc'
 	const [page, setPage] = useState(1);
 	const pageSize = 20;
 
-	const load = async () => {
+	const load = useCallback(async () => {
 		setBusy(true);
 		setError("");
 		try {
 			const data = await listProfessorSessions();
-			setRows(data || []);
+			setRows(Array.isArray(data) ? data : []);
 		} catch (e) {
 			setError(e?.message || "Failed to load sessions");
 		} finally {
 			setBusy(false);
 		}
-	};
-
-	// initial + polling
-	useEffect(() => {
-		let alive = true;
-		(async () => {
-			if (!alive) return;
-			await load();
-		})();
-		const id = setInterval(load, 30000);
-		return () => {
-			alive = false;
-			clearInterval(id);
-		};
 	}, []);
 
+	// TODO: Not giving me the UI experience I want...
+	// When 'handleRefresh' is called, I want to see the loading spinner.
+	// Auto-refresh every 30s (and run immediately on mount)
+	const { tick, pending } = usePolling({
+		fn: load,
+		interval: 30000,
+		immediate: true,
+		enabled: true,
+		defaultMinDurationMs: 0,
+	});
+
 	// Handlers
-	const onRefresh = () => load();
-	const onSortChange = (field) => {
+	const handlePageChange = (next) => {
+		if (next < 1 || next > totalPages) return;
+		setPage(next);
+	};
+
+	const handleRefresh = () => {
+		// manual one-off refresh
+		void tick({ minDurationMs: 100000 }); // give UI time to update
+	};
+
+	const handleSearch = (e) => {
+		const value = e.target.value;
+		setQuery(value);
+		setPage(1); // reset to first page on search change
+	};
+
+	const handleSort = (field) => {
 		if (field === sortField) {
 			setSortDir((d) => (d === "asc" ? "desc" : "asc"));
 		} else {
@@ -88,7 +124,6 @@ export default function Dashboard() {
 					return as > bs ? dir : as < bs ? -dir : 0;
 				}
 				case "feedback": {
-					// true first (or last) depending on dir
 					const af = !!a.feedback;
 					const bf = !!b.feedback;
 					return (Number(af) - Number(bf)) * dir;
@@ -106,10 +141,7 @@ export default function Dashboard() {
 		return sorted.slice(start, start + pageSize);
 	}, [sorted, page, pageSize]);
 
-	const onPageChange = (next) => {
-		if (next < 1 || next > totalPages) return;
-		setPage(next);
-	};
+	const isLoading = busy || pending;
 
 	return (
 		<div className="p-6">
@@ -119,20 +151,24 @@ export default function Dashboard() {
 					<input
 						type="search"
 						value={query}
-						onChange={(e) => {
-							setQuery(e.target.value);
-							setPage(1);
-						}}
+						onChange={handleSearch}
 						placeholder="Search by student name…"
 						className="border rounded px-3 py-1.5 text-sm"
 						aria-label="Search by student name"
 					/>
 					<button
-						onClick={onRefresh}
-						className="px-3 py-1.5 text-sm rounded border"
-						disabled={busy}
+						onClick={handleRefresh}
+						className="px-3 py-1.5 text-sm rounded border flex items-center gap-2"
+						aria-label="Refresh"
+						title="Refresh"
+						disabled={isLoading}
 					>
-						{busy ? "Refreshing…" : "Refresh"}
+						<RefreshIcon
+							className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+						/>
+						<span className="hidden sm:inline">
+							{isLoading ? "Refreshing…" : "Refresh"}
+						</span>
 					</button>
 				</div>
 			</div>
@@ -147,7 +183,7 @@ export default function Dashboard() {
 				busy={busy}
 				sortField={sortField}
 				sortDir={sortDir}
-				onSortChange={onSortChange}
+				onSortChange={handleSort}
 			/>
 
 			{/* Pagination */}
@@ -158,28 +194,28 @@ export default function Dashboard() {
 				<div className="flex items-center gap-1">
 					<button
 						className="px-2 py-1 rounded border"
-						onClick={() => onPageChange(1)}
+						onClick={() => handlePageChange(1)}
 						disabled={page === 1}
 					>
 						« First
 					</button>
 					<button
 						className="px-2 py-1 rounded border"
-						onClick={() => onPageChange(page - 1)}
+						onClick={() => handlePageChange(page - 1)}
 						disabled={page === 1}
 					>
 						‹ Prev
 					</button>
 					<button
 						className="px-2 py-1 rounded border"
-						onClick={() => onPageChange(page + 1)}
+						onClick={() => handlePageChange(page + 1)}
 						disabled={page === totalPages}
 					>
 						Next ›
 					</button>
 					<button
 						className="px-2 py-1 rounded border"
-						onClick={() => onPageChange(totalPages)}
+						onClick={() => handlePageChange(totalPages)}
 						disabled={page === totalPages}
 					>
 						Last »
