@@ -9,6 +9,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ConversationRole {
+  student
+  assistant
+}
+
+enum SessionStatus {
+  created
+  processing
+  completed
+}
+
 model Student {
   id         String       @id @default(cuid())
   name       String
@@ -23,25 +34,31 @@ model Session {
   studentId    String
   slideCount   Int?
   pdfUrl       String?
-  status       String?        // "created" | "processing" | "completed"
+  status       SessionStatus?
   createdAt    DateTime       @default(now())
   completedAt  DateTime?
 
   student      Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
   conversations Conversation[]
   feedback      Feedback?
+
+  @@index([studentId], map: "idx_session_studentId")
+  @@index([status], map: "idx_session_status")
 }
 
 model Conversation {
   id          String       @id @default(cuid())
   sessionId   String
-  role        String    // "student" | "assistant"
+  role        ConversationRole
   content     String
   slideNumber Int?
   timestamp   DateTime
   createdAt   DateTime  @default(now())
 
   session     Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId], map: "idx_conversation_sessionId")
+  @@index([sessionId, timestamp], map: "idx_conversation_sessionId_timestamp") // ← for chronological reads
 }
 
 model Feedback {
