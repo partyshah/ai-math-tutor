@@ -10,6 +10,7 @@ def create_student(name: str):
     return db.student.create(data={"name": name})
 
 
+# --- Sessions ---
 def create_session(
     student_id: str,
     slide_count: Optional[int] = None,
@@ -24,10 +25,6 @@ def create_session(
         }
     )
 
-# --- Sessions ---
-def update_session(session_id: str, data: Dict[str, Any]):
-    return db.session.update(where={"id": session_id}, data=data)
-
 
 def get_session(session_id: str):
     return db.session.find_unique(
@@ -39,10 +36,14 @@ def get_session(session_id: str):
                 "orderBy": {"timestamp": "asc"},
                 "include": {
                     "session": True  # Include session details in conversations
-                }
-            }
+                },
+            },
         },
     )
+
+
+def update_session(session_id: str, data: Dict[str, Any]):
+    return db.session.update(where={"id": session_id}, data=data)
 
 
 # fetch all student sessions with feedback
@@ -51,7 +52,6 @@ def list_sessions():
 
 
 # --- Conversations ---
-
 def add_conversation(
     session_id: str,
     role: str,
