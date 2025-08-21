@@ -1,3 +1,9 @@
+-- CreateEnum
+CREATE TYPE "ConversationRole" AS ENUM ('student', 'assistant');
+
+-- CreateEnum
+CREATE TYPE "SessionStatus" AS ENUM ('created', 'processing', 'completed');
+
 -- CreateTable
 CREATE TABLE "Student" (
     "id" TEXT NOT NULL,
@@ -14,7 +20,7 @@ CREATE TABLE "Session" (
     "studentId" TEXT NOT NULL,
     "slideCount" INTEGER,
     "pdfUrl" TEXT,
-    "status" TEXT,
+    "status" "SessionStatus",
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "completedAt" TIMESTAMP(3),
 
@@ -25,7 +31,7 @@ CREATE TABLE "Session" (
 CREATE TABLE "Conversation" (
     "id" TEXT NOT NULL,
     "sessionId" TEXT NOT NULL,
-    "role" TEXT NOT NULL,
+    "role" "ConversationRole" NOT NULL,
     "content" TEXT NOT NULL,
     "slideNumber" INTEGER,
     "timestamp" TIMESTAMP(3) NOT NULL,
@@ -49,6 +55,18 @@ CREATE TABLE "Feedback" (
 
     CONSTRAINT "Feedback_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE INDEX "idx_session_studentId" ON "Session"("studentId");
+
+-- CreateIndex
+CREATE INDEX "idx_session_status" ON "Session"("status");
+
+-- CreateIndex
+CREATE INDEX "idx_conversation_sessionId" ON "Conversation"("sessionId");
+
+-- CreateIndex
+CREATE INDEX "idx_conversation_sessionId_timestamp" ON "Conversation"("sessionId", "timestamp");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Feedback_sessionId_key" ON "Feedback"("sessionId");

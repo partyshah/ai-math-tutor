@@ -16,7 +16,7 @@ from services.database_service import (
     add_conversation,
     add_conversations_bulk,
 )
-from ai_service import chat_with_ai, transcribe_audio
+from services.ai_service import chat_with_ai, transcribe_audio
 from pdf_utils import get_assignment_text, get_assignment_slides_range
 from feedback_service import generate_feedback
 from pdf_image_service import (
@@ -31,8 +31,6 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
-# CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
-# connect immediately when app starts
 
 
 @app.before_request
@@ -236,12 +234,14 @@ def api_save_feedback_route():
 #     )
 #     return ok(fb.dict())
 
+
 # TODO: Let's break this into seperate endpoints on /chat for better clarity.
 @app.post("/api/chat")
 def chat():
     """
     Persists the student turn (and transcription if present), calls the AI,
     then persists the assistant turn. Returns AI text.
+
     Expected fields:
       - messages: array (JSON or form field with JSON string)
       - selectedAssignment: optional
@@ -267,8 +267,8 @@ def chat():
 
             selected_assignment = request.form.get("selectedAssignment")
             session_id = request.form.get("sessionId")  # REQUIRED
-            slide_number = request.form.get("slideNumber")  # optional
-            timestamp = request.form.get("timestamp")  # optional
+            slide_number = request.form.get("slideNumber")
+            timestamp = request.form.get("timestamp")
 
             audio_transcription = None
             if "audio" in request.files:
@@ -287,16 +287,31 @@ def chat():
             messages = data.get("messages", [])
             selected_assignment = data.get("selectedAssignment")
             session_id = data.get("sessionId")  # REQUIRED
-            slide_number = data.get("slideNumber")  # optional
-            timestamp = data.get("timestamp")  # optional
+            slide_number = data.get("slideNumber")
+            timestamp = data.get("timestamp")
             audio_transcription = None
 
-        if not messages:
-            return jsonify({"error": "Messages are required"}), 400
+        # ---- Validate inputs ----
+        if not isinstance(messages, list) or not messages:
+            return jsonify({"error": "Messages (array) are required"}), 400
         if not session_id:
             return jsonify({"error": "sessionId is required"}), 400
 
-        # ---- Persist student turn (last user/student message) ----
+        # Normalize slide number to int or None
+        try:
+            slide_number_int = (
+                int(slide_number)
+                if slide_number
+                not in (
+                    None,
+                    "",
+                )
+                else None
+            )
+        except Exception:
+            slide_number_int = None
+
+        # ---- Persist student turn (last message) ----
         last_user = next(
             (m for m in reversed(messages) if m.get("role") in ("user", "student")),
             None,
@@ -306,13 +321,14 @@ def chat():
             student_text = (
                 f"{student_text}\n\n[Transcription]\n{audio_transcription}".strip()
             )
+
         if student_text:
             add_conversation(
                 session_id=session_id,
                 role="student",
                 content=student_text,
-                slide_number=int(slide_number) if slide_number else None,
-                timestamp=timestamp,
+                slide_number=slide_number_int,
+                timestamp=timestamp,  # handled safely in database_service
             )
 
         # ---- Optional PDF context ----
@@ -320,7 +336,7 @@ def chat():
             get_assignment_text(selected_assignment) if selected_assignment else None
         )
 
-        # ---- Call your AI service (existing helper) ----
+        # ---- Call AI service ----
         ai_text = chat_with_ai(messages, pdf_context, audio_transcription)
 
         # ---- Persist assistant turn ----
@@ -329,7 +345,7 @@ def chat():
                 session_id=session_id,
                 role="assistant",
                 content=ai_text,
-                slide_number=int(slide_number) if slide_number else None,
+                slide_number=slide_number_int,
                 timestamp=None,
             )
 
@@ -338,6 +354,7 @@ def chat():
     except Exception as e:
         print("❌ /api/chat failed:", e)
         return jsonify({"error": str(e)}), 500
+
 
 # TODO: Remove the commented-out chat function once the new one is tested more completely.
 # @app.route("/api/chat", methods=["POST"])

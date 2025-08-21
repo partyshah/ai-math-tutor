@@ -118,7 +118,7 @@ export default function ChatApp() {
 		}
 	};
 
-	const handleKeyPress = (e) => {
+	const handleKeyDown = (e) => {
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
 			sendMessage();
@@ -285,7 +285,7 @@ export default function ChatApp() {
 					<textarea
 						value={inputMessage}
 						onChange={(e) => setInputMessage(e.target.value)}
-						onKeyPress={handleKeyPress}
+						onKeyDown={handleKeyDown}
 						placeholder="Tell me about your startup challenge..."
 						disabled={isLoading}
 					/>

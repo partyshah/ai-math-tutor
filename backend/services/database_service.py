@@ -1,6 +1,5 @@
 from typing import Optional, List, Dict, Any
-import time
-from datetime import datetime
+from datetime import datetime, timezone
 from services.db import db
 
 
@@ -33,7 +32,16 @@ def update_session(session_id: str, data: Dict[str, Any]):
 def get_session(session_id: str):
     return db.session.find_unique(
         where={"id": session_id},
-        include={"student": True, "feedback": True, "conversations": True},
+        include={
+            "student": True,
+            "feedback": True,
+            "conversations": {
+                "orderBy": {"timestamp": "asc"},
+                "include": {
+                    "session": True  # Include session details in conversations
+                }
+            }
+        },
     )
 
 
@@ -51,14 +59,20 @@ def add_conversation(
     slide_number: Optional[int] = None,
     timestamp: Optional[str] = None,
 ):
-    ts = None
+    ts: datetime
     if timestamp:
         try:
-            ts = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            # support "Z" suffix
+            normalized = timestamp.replace("Z", "+00:00")
+            ts = datetime.fromisoformat(normalized)
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            else:
+                ts = ts.astimezone(timezone.utc)
         except Exception:
             raise ValueError(f"Invalid timestamp format: {timestamp}")
     else:
-        ts = datetime.fromisoformat(time.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        ts = datetime.now(timezone.utc)
 
     return db.conversation.create(
         data={
@@ -72,8 +86,34 @@ def add_conversation(
 
 
 def add_conversations_bulk(items: List[Dict[str, Any]]):
-    # items: [{sessionId, role, content, slideNumber?, timestamp}]
-    return db.conversation.create_many(data=items)
+    # Convert incoming items' timestamps to datetime in UTC
+    normed = []
+    for it in items:
+        ts = it.get("timestamp")
+        if ts:
+            try:
+                ts_norm = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                if ts_norm.tzinfo is None:
+                    ts_norm = ts_norm.replace(tzinfo=timezone.utc)
+                else:
+                    ts_norm = ts_norm.astimezone(timezone.utc)
+            except Exception:
+                # You can choose to raise; here we default to "now"
+                ts_norm = datetime.now(timezone.utc)
+        else:
+            ts_norm = datetime.now(timezone.utc)
+
+        normed.append(
+            {
+                "sessionId": it.get("sessionId"),
+                "role": it.get("role"),
+                "content": it.get("content"),
+                "slideNumber": it.get("slideNumber"),
+                "timestamp": ts_norm,
+            }
+        )
+
+    return db.conversation.create_many(data=normed)
 
 
 # --- Feedback ---

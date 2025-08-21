@@ -5,6 +5,13 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
+TRANSCRIBE_MODEL = os.getenv("OPENAI_TRANSCRIBE_MODEL", "whisper-1")
+CHAT_MODEL = os.getenv("OPENAI_CHAT_MODEL", "gpt-5")  # overridable via env
+MAX_CONTEXT_CHARS = int(os.getenv("MAX_CONTEXT_CHARS", "15000"))  # hard guard
+MAX_TRANSCRIPT_CHARS = int(
+    os.getenv("MAX_TRANSCRIPT_CHARS", "8000")
+)  # optional tighter guard
+
 api_key = os.getenv('OPENAI_API_KEY')
 if not api_key:
     raise ValueError("OPENAI_API_KEY not found in environment variables")
@@ -60,55 +67,94 @@ curious, concise, a little skeptical, and totally focused on what will make this
 
 def transcribe_audio(audio_file):
     """
-    Transcribe audio file using OpenAI Whisper
+    Transcribe audio file using OpenAI Whisper-compatible endpoint.
+    Returns a plain string.
     """
     try:
         with open(audio_file, 'rb') as f:
             transcript = client.audio.transcriptions.create(
-                model="whisper-1",
+                model=TRANSCRIBE_MODEL,
                 file=f,
                 response_format="text"
             )
-        return transcript
+
+        # Some SDK versions return a string; others a wrapper. Normalize.
+        return transcript if isinstance(transcript, str) else str(transcript)
     except Exception as e:
         raise Exception(f"Audio transcription error: {str(e)}")
 
+# TODO: Should we split audio vs PDF?
 def chat_with_ai(messages, pdf_context=None, audio_transcription=None):
     try:
         print("🤖 AI service called")
         print(f"📄 PDF context provided: {bool(pdf_context)}")
         print(f"🎙️ Audio transcription provided: {bool(audio_transcription)}")
-        
-        if audio_transcription:
-            print(f"📝 Transcription length: {len(audio_transcription)} characters")
-            print(f"📝 Transcription preview: {audio_transcription[:100]}...")
-        
+
+        # ---- Normalize inbound messages to {role, content} strings ----
+        safe_messages = []
+        for m in messages or []:
+            role = str(m.get("role", "")).strip() or "user"
+            content = str(m.get("content", "")).strip()
+            if content:
+                safe_messages.append({"role": role, "content": content})
+        if not safe_messages:
+            # Fallback to a stub so we don't send empty user content
+            safe_messages = [{"role": "user", "content": "Let's begin."}]
+
+            # ---- Trim very large contexts to avoid token explosions ----
+
+        def trim(txt: str, limit: int) -> str:
+            if not txt:
+                return ""
+            s = str(txt)
+            return (
+                s if len(s) <= limit else (s[: limit - 1000] + "\n\n[...truncated...]")
+            )
+
+        pdf_context_trimmed = trim(pdf_context, MAX_CONTEXT_CHARS)
+        transcription_trimmed = trim(audio_transcription, MAX_TRANSCRIPT_CHARS)
+
+        if transcription_trimmed:
+            audio_transcription_length = len(audio_transcription)
+            trimmed_transcription_length = len(transcription_trimmed)
+            print(f"📝 Transcription length trimmed from {audio_transcription_length} to {trimmed_transcription_length} characters")
+            print(f"📝 Transcription preview: {transcription_trimmed[:100]}...")
+
+        # ---- Build system message ----
         # Create system prompt with optional PDF context and audio transcription
         system_content = SYSTEM_PROMPT
-        
-        if pdf_context:
-            system_content += f"\n\nCONTEXT: The entrepreneur/founder is working with the following material:\n\n{pdf_context}\n\nUse this content as reference when providing mentorship. You can refer to specific concepts, frameworks, or case studies from the material while maintaining your conversational mentoring approach."
-        
-        if audio_transcription:
-            print("🎯 Adding audio transcription to AI context!")
-            system_content += f"\n\nPRESENTATION WALKTHROUGH: Here's what the founder said while walking through their presentation:\n\n\"{audio_transcription}\"\n\nUse this spoken walkthrough to understand how they presented their ideas, what they emphasized, and tailor your questions accordingly. Focus on areas where their explanation might need strengthening or where you detected uncertainty."
-        
+
+        if pdf_context_trimmed:
+            system_content += (
+                "\n\nCONTEXT: The entrepreneur/founder is working with the following material:\n\n"
+                f"{pdf_context_trimmed}\n\n"
+                "Use this content as reference when providing mentorship.\n\n"
+                "You can refer to specific concepts, frameworks, or case studies from the material while maintaining your conversational mentoring approach."
+            )
+
+        if transcription_trimmed:
+            system_content += (
+                "\n\nPRESENTATION WALKTHROUGH: Here's what the founder said while walking through their presentation:\n\n"
+                f"\"{transcription_trimmed}\"\n\n"
+                "Use this spoken walkthrough to understand how they presented their ideas, what they emphasized, and tailor your questions accordingly\n\n."
+                "Focus on areas where their explanation might need strengthening or where you detected uncertainty."
+            )
         # Add system prompt to the beginning of messages
-        full_messages = [{"role": "system", "content": system_content}] + messages
-        
+        # full_messages = [{"role": "system", "content": system_content}] + messages
+        full_messages = [{"role": "system", "content": system_content}] + safe_messages
+
         response = client.chat.completions.create(
-            model="gpt-5",
+            model=CHAT_MODEL,
             messages=full_messages,
             max_completion_tokens=800,
             reasoning_effort="minimal",
             # temperature=0.7
-        )   
-        
+        )
+
         ai_response = response.choices[0].message.content
-        
+
         # Return simple text response for entrepreneurship mentoring
         return ai_response
-    
+
     except Exception as e:
         raise Exception(f"AI service error: {str(e)}")
-

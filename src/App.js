@@ -3,14 +3,18 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import PDFViewer from "./PDFViewer";
 import TTSService from "./TTSService";
 
-// import Avatar from "./Avatar";
+import { useSession } from "./contexts/SessionContext";
+import { createChat, createFormChat } from "./services/api";
+
 import Feedback from "./Feedback";
 import AppContext from "./contexts/AppContext";
 import RequireSession from "./components/RequireSession";
 import StudentNameInput from "./components/StudentNameInput";
 import ChatApp from "./components/ChatApp";
-import { useSession } from "../contexts/SessionContext";
-import { createChat, createFormChat } from "./services/api";
+import ProfessorDashboard from "./components/ProfessorDashboard";
+import ProfessorSession from "./components/ProfessorSession";
+import LandingPage from "./components/LandingPage";
+
 import "./App.css";
 
 function App() {
@@ -468,12 +472,16 @@ function App() {
 			<Router>
 				<Routes>
 					<Route
-						path="/start"
-						element={<StudentNameInput />}
+						path="/"
+						element={<LandingPage />}
 					/>
 
 					<Route
-						path="/"
+						path="/start"
+						element={<StudentNameInput />}
+					/>
+					<Route
+						path="/student"
 						element={
 							<RequireSession>
 								<div className="App">
@@ -505,6 +513,15 @@ function App() {
 								</div>
 							</RequireSession>
 						}
+					/>
+
+					<Route
+						path="/professor"
+						element={<ProfessorDashboard />}
+					/>
+					<Route
+						path="/professor/session/:id"
+						element={<ProfessorSession />}
 					/>
 					<Route
 						path="/feedback"

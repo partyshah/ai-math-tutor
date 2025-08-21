@@ -1,4 +1,4 @@
-const BASE_API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const BASE_API = process.env.REACT_APP_API_URL || "http://localhost:5001/api";
 
 export async function createSession({ studentName, slideCount, pdfUrl }) {
 	const r = await fetch(`${BASE_API}/session/create`, {
@@ -40,7 +40,7 @@ export async function createFormChat(formData) {
 		body: formData,
 	});
 	if (!response.ok) throw new Error(`createFormChat failed ${response.status}`);
-	return response.json();
+	return response
 }
 
 export async function logConversation({
