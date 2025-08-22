@@ -356,6 +356,42 @@ def chat():
         return jsonify({"error": str(e)}), 500
 
 
+@app.put("/api/session/<session_id>/reviewed")
+def api_mark_reviewed(session_id: str):
+    """
+    Marks a session's feedback as 'viewedByProfessor'.
+    If feedback doesn't exist yet, creates a minimal record and marks it reviewed.
+    """
+    from services.db import db
+
+    s = get_session(session_id)
+    if not s:
+        return not_found()
+
+    now = db.raw("NOW()")
+    if not s.feedback:
+        fb = db.feedback.create(
+            {
+                "data": {
+                    "sessionId": session_id,
+                    "overallFeedback": "",
+                    "presentationScore": None,
+                    "viewedByProfessor": True,
+                    "viewedAt": now,
+                }
+            }
+        )
+        return ok(fb.dict())
+
+    fb = db.feedback.update(
+        {
+            "where": {"id": s.feedback.id},
+            "data": {"viewedByProfessor": True, "viewedAt": now},
+        }
+    )
+    return ok(fb.dict())
+
+
 # TODO: Remove the commented-out chat function once the new one is tested more completely.
 # @app.route("/api/chat", methods=["POST"])
 # def chat():
