@@ -1,32 +1,6 @@
 import SessionTableRow from "./SessionTableRow";
+import TableSortHeader from "../ui/TableSortHeader";
 
-function SortHeader({
-	field,
-	label,
-	sortField,
-	sortDir,
-	onSortChange,
-	className,
-}) {
-	const isActive = sortField === field;
-	const arrow = !isActive ? "⇅" : sortDir === "asc" ? "↑" : "↓";
-	return (
-		<th
-			className={`py-2 cursor-pointer select-none ${className || ""}`}
-			onClick={() => onSortChange(field)}
-			aria-sort={
-				isActive ? (sortDir === "asc" ? "ascending" : "descending") : "none"
-			}
-			scope="col"
-		>
-			<span className={isActive ? "font-semibold" : ""}>
-				{label} <span className="opacity-60">{arrow}</span>
-			</span>
-		</th>
-	);
-}
-
-// Props: rows, busy, sortField, sortDir, onSortChange
 export default function SessionTable({
 	rows = [],
 	busy = false,
@@ -38,37 +12,37 @@ export default function SessionTable({
 		<table className="w-full text-sm border rounded overflow-hidden">
 			<thead className="bg-gray-50">
 				<tr className="text-left border-b">
-					<SortHeader
+					<th className="pl-2 w-28">Expand</th>
+					<TableSortHeader
 						field="student"
 						label="Student"
 						sortField={sortField}
 						sortDir={sortDir}
 						onSortChange={onSortChange}
-						className="pl-2"
 					/>
 					<th>Session ID</th>
-					<SortHeader
+					<TableSortHeader
 						field="createdAt"
 						label="Created"
 						sortField={sortField}
 						sortDir={sortDir}
 						onSortChange={onSortChange}
 					/>
-					<SortHeader
+					<TableSortHeader
 						field="completedAt"
 						label="Completed"
 						sortField={sortField}
 						sortDir={sortDir}
 						onSortChange={onSortChange}
 					/>
-					<SortHeader
+					<TableSortHeader
 						field="status"
 						label="Status"
 						sortField={sortField}
 						sortDir={sortDir}
 						onSortChange={onSortChange}
 					/>
-					<SortHeader
+					<TableSortHeader
 						field="feedback"
 						label="Feedback"
 						sortField={sortField}
@@ -86,4 +60,3 @@ export default function SessionTable({
 		</table>
 	);
 }
-

@@ -106,7 +106,7 @@ export async function saveFeedback({
 	strengths = null,
 	improvements = null,
 }) {
-	const r = await fetch(ENDPOINTS.feedback, {
+	const r = await fetch(ENDPOINTS.feedback.create, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({
@@ -119,5 +119,11 @@ export async function saveFeedback({
 		}),
 	});
 	if (!r.ok) throw new Error(`saveFeedback failed ${r.status}`);
+	return r.json();
+}
+
+export async function loadTestFeedback() {
+	const r = await fetch(ENDPOINTS.feedback.test);
+	if (!r.ok) throw new Error(`loadTestFeedback failed ${r.status}`);
 	return r.json();
 }
