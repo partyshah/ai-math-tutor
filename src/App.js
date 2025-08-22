@@ -6,13 +6,14 @@ import TTSService from "./TTSService";
 import { useSession } from "./contexts/SessionContext";
 import { createChat, createFormChat } from "./services/api";
 
-import Feedback from "./Feedback";
+// import Feedback from "./Feedback";
 import AppContext from "./contexts/AppContext";
 import RequireSession from "./components/RequireSession";
 import StudentNameInput from "./components/StudentNameInput";
 import ChatApp from "./components/ChatApp";
-import ProfessorDashboard from "./components/ProfessorDashboard";
-import ProfessorSession from "./components/ProfessorSession";
+import Dashboard from "./components/professor/Dashboard";
+import Sessions from "./components/professor/Sessions";
+import FeedbackPage from "./pages/FeedbackPage";
 import LandingPage from "./components/LandingPage";
 
 import "./App.css";
@@ -517,15 +518,15 @@ function App() {
 
 					<Route
 						path="/professor"
-						element={<ProfessorDashboard />}
+						element={<Dashboard />}
 					/>
 					<Route
 						path="/professor/session/:id"
-						element={<ProfessorSession />}
+						element={<Sessions />}
 					/>
 					<Route
 						path="/feedback"
-						element={<Feedback />}
+						element={<FeedbackPage />}
 					/>
 				</Routes>
 			</Router>
