@@ -147,7 +147,7 @@ export default function Dashboard() {
 		<div className="p-6">
 			<div className="flex items-center justify-between mb-4">
 				<h1 className="text-xl font-semibold">Professor Dashboard</h1>
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-2 no-print">
 					<input
 						type="search"
 						value={query}
@@ -187,7 +187,7 @@ export default function Dashboard() {
 			/>
 
 			{/* Pagination */}
-			<div className="mt-3 flex items-center justify-between text-sm">
+			<div className="mt-3 flex items-center justify-between text-sm pagination">
 				<div>
 					Page {page} of {totalPages} • {sorted.length} total
 				</div>

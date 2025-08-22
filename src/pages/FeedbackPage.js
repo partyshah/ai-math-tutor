@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import FeedbackDisplay from "../components/feedback/FeedbackDisplay";
-import { loadTestFeedback } from "../services/api"; // Adjust the import path as needed
+import { getTestFeedback } from "../services/api"; // Adjust the import path as needed
 
 export default function FeedbackPage() {
 	const [feedbackData, setFeedbackData] = useState(null);
@@ -11,9 +11,9 @@ export default function FeedbackPage() {
     // TODO: Once tested, wrap this function in development checks
     // TODO: What does /feedback/test return?
     // TODO: Should I just move this whole function into a service file?
-	const loadTestFeedback = async () => {
+	const handleLoadTestFeedback = async () => {
 		try {
-			const data = await loadTestFeedback();
+			const data = await getTestFeedback();
 			if (data?.feedback) {
 				const legacyData = {
 					feedback_type: "legacy",
@@ -70,7 +70,7 @@ export default function FeedbackPage() {
 			data={feedbackData}
 			readOnly={false}
 			onBack={goBack}
-			onLoadTest={loadTestFeedback}
+			onLoadTest={handleLoadTestFeedback}
 		/>
 	);
 }
